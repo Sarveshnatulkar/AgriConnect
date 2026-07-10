@@ -37,7 +37,8 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (phone !== undefined) {
-    user.phone = phone.trim() || null;
+    // phone may arrive as null (cleared by user) or as a string — guard both
+    user.phone = (typeof phone === "string" ? phone.trim() : "") || null;
   }
 
   if (address !== undefined && typeof address === "object") {

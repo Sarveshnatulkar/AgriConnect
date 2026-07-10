@@ -5,7 +5,6 @@ import {
   HiOutlineLocationMarker, HiOutlineCalendar, HiOutlineBadgeCheck,
   HiX,
 } from "react-icons/hi";
-import { FaSeedling } from "react-icons/fa";
 import toast from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
 import InputField from "../../components/common/InputField";
@@ -203,15 +202,15 @@ const EditProfile = ({ user, onSave }) => {
       }
 
       const payload = {
-        name:  form.name.trim(),
-        phone: form.phone.trim() || null,
+        name:  (form.name  || "").trim(),
+        phone: (form.phone || "").trim() || null,
         avatar: avatarUrl,
         address: {
-          street:  form.street.trim(),
-          city:    form.city.trim(),
-          state:   form.state.trim(),
-          pincode: form.pincode.trim(),
-          country: form.country.trim() || "India",
+          street:  (form.street  || "").trim() || null,
+          city:    (form.city    || "").trim() || null,
+          state:   (form.state   || "").trim() || null,
+          pincode: (form.pincode || "").trim() || null,
+          country: (form.country || "").trim() || "India",
         },
       };
 

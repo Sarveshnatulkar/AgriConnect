@@ -1,107 +1,139 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  FaSeedling,
-  FaShoppingBasket,
-  FaTruck,
-  FaShieldAlt,
-  FaMapMarkerAlt,
-  FaLeaf,
-  FaArrowRight,
-  FaUsers,
-  FaBoxOpen,
-  FaGlobeAsia,
+  FaSeedling, FaShoppingBasket, FaTruck, FaShieldAlt,
+  FaMapMarkerAlt, FaLeaf, FaArrowRight, FaUsers,
+  FaBoxOpen, FaGlobeAsia, FaCheckCircle,
 } from "react-icons/fa";
 import {
-  MdOutlineAgriculture,
-  MdOutlineLocalFlorist,
-  MdOutlineStorefront,
-  MdDashboard,
+  MdOutlineAgriculture, MdOutlineStorefront, MdDashboard,
+  MdVerified, MdSupportAgent,
 } from "react-icons/md";
-import { GiWheat, GiCarrot, GiGrapes, GiMilkCarton } from "react-icons/gi";
-import { HiOutlineBadgeCheck, HiOutlineCurrencyRupee } from "react-icons/hi";
+import {
+  GiWheat, GiCarrot, GiGrapes, GiFruitBowl,
+  GiCorn, GiBeanstalk,
+} from "react-icons/gi";
+import {
+  HiOutlineBadgeCheck, HiOutlineCurrencyRupee,
+  HiOutlineTrendingUp, HiOutlineLightningBolt,
+} from "react-icons/hi";
 import useAuth from "../../hooks/useAuth";
 import { fetchFeaturedCrops, fetchPlatformStats } from "../../services/cropService";
 import { ROUTES, ROLE_DASHBOARD } from "../../utils/constants";
 import { capitalise, formatCurrency } from "../../utils/helpers";
 
-// ─── Static category browse tiles ────────────────────────────────────────────
-// Category counts are intentionally omitted — they were hardcoded and misleading.
+// ─── Category browse tiles ────────────────────────────────────────────────────
 const CATEGORIES = [
   {
-    icon:   <GiWheat className="text-4xl text-amber-500" />,
-    label:  "Grains",
-    value:  "grains",
-    bg:     "bg-amber-50",
-    border: "border-amber-100",
-    hover:  "hover:bg-amber-100",
+    icon:    <GiWheat className="text-4xl" />,
+    label:   "Grains",
+    value:   "grains",
+    colour:  "text-amber-500",
+    bg:      "bg-gradient-to-br from-amber-50 to-yellow-50",
+    border:  "border-amber-200",
+    ring:    "hover:ring-2 hover:ring-amber-300",
+    iconBg:  "bg-amber-100",
   },
   {
-    icon:   <GiCarrot className="text-4xl text-orange-500" />,
-    label:  "Vegetables",
-    value:  "vegetables",
-    bg:     "bg-orange-50",
-    border: "border-orange-100",
-    hover:  "hover:bg-orange-100",
+    icon:    <GiCarrot className="text-4xl" />,
+    label:   "Vegetables",
+    value:   "vegetables",
+    colour:  "text-orange-500",
+    bg:      "bg-gradient-to-br from-orange-50 to-red-50",
+    border:  "border-orange-200",
+    ring:    "hover:ring-2 hover:ring-orange-300",
+    iconBg:  "bg-orange-100",
   },
   {
-    icon:   <GiGrapes className="text-4xl text-purple-500" />,
-    label:  "Fruits",
-    value:  "fruits",
-    bg:     "bg-purple-50",
-    border: "border-purple-100",
-    hover:  "hover:bg-purple-100",
+    icon:    <GiGrapes className="text-4xl" />,
+    label:   "Fruits",
+    value:   "fruits",
+    colour:  "text-purple-500",
+    bg:      "bg-gradient-to-br from-purple-50 to-pink-50",
+    border:  "border-purple-200",
+    ring:    "hover:ring-2 hover:ring-purple-300",
+    iconBg:  "bg-purple-100",
   },
   {
-    icon:   <MdOutlineLocalFlorist className="text-4xl text-pink-500" />,
-    label:  "Pulses",
-    value:  "pulses",
-    bg:     "bg-pink-50",
-    border: "border-pink-100",
-    hover:  "hover:bg-pink-100",
+    icon:    <GiBeanstalk className="text-4xl" />,
+    label:   "Pulses",
+    value:   "pulses",
+    colour:  "text-green-600",
+    bg:      "bg-gradient-to-br from-green-50 to-emerald-50",
+    border:  "border-green-200",
+    ring:    "hover:ring-2 hover:ring-green-300",
+    iconBg:  "bg-green-100",
   },
   {
-    icon:   <GiMilkCarton className="text-4xl text-blue-500" />,
-    label:  "Dairy",
-    value:  "dairy",
-    bg:     "bg-blue-50",
-    border: "border-blue-100",
-    hover:  "hover:bg-blue-100",
+    icon:    <GiCorn className="text-4xl" />,
+    label:   "Oilseeds",
+    value:   "oilseeds",
+    colour:  "text-yellow-600",
+    bg:      "bg-gradient-to-br from-yellow-50 to-lime-50",
+    border:  "border-yellow-200",
+    ring:    "hover:ring-2 hover:ring-yellow-300",
+    iconBg:  "bg-yellow-100",
+  },
+  {
+    icon:    <GiFruitBowl className="text-4xl" />,
+    label:   "Others",
+    value:   "other",
+    colour:  "text-teal-500",
+    bg:      "bg-gradient-to-br from-teal-50 to-cyan-50",
+    border:  "border-teal-200",
+    ring:    "hover:ring-2 hover:ring-teal-300",
+    iconBg:  "bg-teal-100",
   },
 ];
 
+// ─── Why AgriConnect features ─────────────────────────────────────────────────
 const WHY_FEATURES = [
   {
-    icon:  <HiOutlineCurrencyRupee className="text-3xl text-primary-600" />,
-    bg:    "bg-primary-50",
+    icon:  <HiOutlineCurrencyRupee className="text-2xl" />,
+    iconBg: "bg-primary-600",
+    badge: "No Hidden Fees",
     title: "Fair Pricing",
-    desc:  "Farmers set their own prices. No commission, no hidden fees. Buyers always get market-competitive rates directly from the source.",
+    desc:  "Farmers set their own prices. Zero commission, zero middlemen. Buyers get market-competitive rates straight from the source.",
   },
   {
-    icon:  <HiOutlineBadgeCheck className="text-3xl text-blue-600" />,
-    bg:    "bg-blue-50",
+    icon:  <MdVerified className="text-2xl" />,
+    iconBg: "bg-blue-600",
+    badge: "ID Verified",
     title: "Verified Farmers",
-    desc:  "Every farmer on the platform is identity-verified. Browse with confidence knowing you're buying from a real, trusted source.",
+    desc:  "Every farmer on the platform is identity-verified. Browse with confidence knowing you're buying from a trusted, real source.",
   },
   {
-    icon:  <FaTruck className="text-3xl text-amber-600" />,
-    bg:    "bg-amber-50",
+    icon:  <HiOutlineLightningBolt className="text-2xl" />,
+    iconBg: "bg-amber-500",
+    badge: "Nationwide",
     title: "Fast Delivery",
-    desc:  "Our transporter network ensures crops reach buyers fresh. Real-time tracking available for every active delivery.",
+    desc:  "Our transporter network ensures crops reach buyers farm-fresh. Real-time tracking on every active delivery.",
   },
   {
-    icon:  <FaShieldAlt className="text-3xl text-purple-600" />,
-    bg:    "bg-purple-50",
+    icon:  <FaShieldAlt className="text-xl" />,
+    iconBg: "bg-purple-600",
+    badge: "100% Secure",
     title: "Secure Transactions",
-    desc:  "End-to-end encrypted payments and dispute resolution. Your money is protected at every step of the transaction.",
+    desc:  "End-to-end encrypted payments and built-in dispute resolution. Your money is protected at every step.",
+  },
+  {
+    icon:  <HiOutlineTrendingUp className="text-2xl" />,
+    iconBg: "bg-green-600",
+    badge: "Live Data",
+    title: "Market Insights",
+    desc:  "Browse live pricing across categories and states so you always know what the market is paying for your produce.",
+  },
+  {
+    icon:  <MdSupportAgent className="text-2xl" />,
+    iconBg: "bg-rose-500",
+    badge: "Always On",
+    title: "Dedicated Support",
+    desc:  "Our team is available to help farmers and buyers resolve any issues quickly — from listing problems to delivery disputes.",
   },
 ];
 
-// ── Placeholder image ─────────────────────────────────────────────────────────
-const PLACEHOLDER = "https://placehold.co/400x260/f0fdf4/16a34a?text=No+Image";
-
-// ── Category colour pill ──────────────────────────────────────────────────────
-const CATEGORY_COLOURS = {
+// ─── Category colour pills ─────────────────────────────────────────────────────
+const CATEGORY_PILL = {
   vegetables: "bg-green-100  text-green-700",
   fruits:     "bg-purple-100 text-purple-700",
   grains:     "bg-amber-100  text-amber-700",
@@ -113,7 +145,9 @@ const CATEGORY_COLOURS = {
   other:      "bg-gray-100   text-gray-600",
 };
 
-// ─── Reusable layout helpers ──────────────────────────────────────────────────
+const PLACEHOLDER = "https://placehold.co/400x260/f0fdf4/16a34a?text=No+Image";
+
+// ─── Layout helpers ───────────────────────────────────────────────────────────
 const Section = ({ children, className = "" }) => (
   <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>
     {children}
@@ -121,24 +155,25 @@ const Section = ({ children, className = "" }) => (
 );
 
 const SectionHeader = ({ eyebrow, title, subtitle }) => (
-  <div className="text-center mb-12">
+  <div className="text-center mb-14">
     {eyebrow && (
-      <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary-600 bg-primary-50 px-3 py-1 rounded-full mb-3">
+      <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-primary-600 bg-primary-50 border border-primary-100 px-3.5 py-1.5 rounded-full mb-4">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
         {eyebrow}
       </span>
     )}
-    <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+    <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 leading-tight">
       {title}
     </h2>
     {subtitle && (
-      <p className="mt-3 text-gray-500 text-base max-w-xl mx-auto leading-relaxed">
+      <p className="mt-4 text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
         {subtitle}
       </p>
     )}
   </div>
 );
 
-// ── Skeleton for stat cards ───────────────────────────────────────────────────
+// ── Skeletons ─────────────────────────────────────────────────────────────────
 const StatSkeleton = () => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-3 animate-pulse">
     <div className="w-14 h-14 rounded-2xl bg-gray-200" />
@@ -147,13 +182,12 @@ const StatSkeleton = () => (
   </div>
 );
 
-// ── Skeleton for featured crop cards ─────────────────────────────────────────
 const FeaturedSkeleton = () => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
-    <div className="h-44 bg-gray-200" />
+    <div className="h-52 bg-gray-200" />
     <div className="p-5 flex flex-col gap-3">
       <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-6 bg-gray-200 rounded w-1/2" />
+      <div className="h-7 bg-gray-200 rounded w-1/2" />
       <div className="h-3 bg-gray-100 rounded w-2/3" />
       <div className="h-3 bg-gray-100 rounded w-1/2" />
       <div className="h-10 bg-gray-100 rounded-xl mt-2" />
@@ -162,119 +196,138 @@ const FeaturedSkeleton = () => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main component
+// HomePage
 // ─────────────────────────────────────────────────────────────────────────────
-
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
 
-  // ── Live stats ────────────────────────────────────────────────────────────
-  const [stats,        setStats]        = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  // ── Live featured crops ───────────────────────────────────────────────────
-  const [featuredCrops,        setFeaturedCrops]        = useState([]);
-  const [featuredLoading,      setFeaturedLoading]      = useState(true);
-  const [featuredError,        setFeaturedError]        = useState(false);
+  const [stats,           setStats]          = useState(null);
+  const [statsLoading,    setStatsLoading]   = useState(true);
+  const [featuredCrops,   setFeaturedCrops]  = useState([]);
+  const [featuredLoading, setFeaturedLoading]= useState(true);
+  const [featuredEmpty,   setFeaturedEmpty]  = useState(false);
 
   useEffect(() => {
-    // Fetch both in parallel — public endpoints, no auth needed
     Promise.all([
       fetchPlatformStats().catch(() => null),
       fetchFeaturedCrops().catch(() => null),
     ]).then(([statsRes, featuredRes]) => {
       if (statsRes?.data) setStats(statsRes.data);
       setStatsLoading(false);
-
-      if (featuredRes?.data?.crops) {
+      if (featuredRes?.data?.crops?.length) {
         setFeaturedCrops(featuredRes.data.crops);
       } else {
-        setFeaturedError(true);
+        setFeaturedEmpty(true);
       }
       setFeaturedLoading(false);
     });
   }, []);
 
-  // ── Stat cards definition — populated from API when available ─────────────
   const STAT_CARDS = [
     {
-      icon:  <FaUsers className="text-3xl" />,
-      value: stats ? `${stats.farmers.toLocaleString()}+` : "—",
-      label: "Farmers",
+      icon:    <FaUsers className="text-2xl" />,
+      value:   stats ? `${stats.farmers.toLocaleString()}+` : "—",
+      label:   "Registered Farmers",
+      iconBg:  "bg-primary-600",
     },
     {
-      icon:  <FaShoppingBasket className="text-3xl" />,
-      value: stats ? `${stats.buyers.toLocaleString()}+` : "—",
-      label: "Buyers",
+      icon:    <FaShoppingBasket className="text-2xl" />,
+      value:   stats ? `${stats.buyers.toLocaleString()}+` : "—",
+      label:   "Active Buyers",
+      iconBg:  "bg-blue-600",
     },
     {
-      icon:  <FaBoxOpen className="text-3xl" />,
-      value: stats ? `${stats.listings.toLocaleString()}+` : "—",
-      label: "Active Listings",
+      icon:    <FaBoxOpen className="text-2xl" />,
+      value:   stats ? `${stats.listings.toLocaleString()}+` : "—",
+      label:   "Live Listings",
+      iconBg:  "bg-green-600",
     },
     {
-      icon:  <FaGlobeAsia className="text-3xl" />,
-      value: stats ? String(stats.states) : "—",
-      label: "States Covered",
+      icon:    <FaGlobeAsia className="text-2xl" />,
+      value:   stats ? String(stats.states) : "—",
+      label:   "States Covered",
+      iconBg:  "bg-purple-600",
     },
   ];
+
+  // Role-aware hero secondary CTA:
+  // Guests → "Sell Your Crops" (→ /register)
+  // Farmers → "List Your Crops" (→ /crops/new)
+  // Buyers / Transporters / Admins → hidden
+  const showSecondaryCTA = !isAuthenticated || user?.role === "farmer";
 
   return (
     <div className="flex flex-col">
 
       {/* ══════════════════════════════════════════════════════════════
-          1. HERO SECTION
+          HERO
       ══════════════════════════════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500"
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, #14532d 0%, #166534 30%, #15803d 60%, #16a34a 100%)",
+        }}
         aria-labelledby="hero-heading"
       >
-        {/* Decorative blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-20 -right-20 w-96 h-96 bg-primary-400 rounded-full opacity-20 blur-3xl" />
-          <div className="absolute -bottom-32 -left-20 w-80 h-80 bg-primary-800 rounded-full opacity-30 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white rounded-full opacity-5" />
+        {/* Layered background texture */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {/* Large radial glow top-right */}
+          <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-20"
+               style={{ background: "radial-gradient(circle, #4ade80 0%, transparent 70%)" }} />
+          {/* Bottom-left bleed */}
+          <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full opacity-15"
+               style={{ background: "radial-gradient(circle, #86efac 0%, transparent 70%)" }} />
+          {/* Dot grid overlay */}
+          <div className="absolute inset-0 opacity-5"
+               style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+          {/* Diagonal shine strip */}
+          <div className="absolute inset-0 opacity-5"
+               style={{ background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%)" }} />
         </div>
 
-        <Section className="relative py-24 sm:py-32">
-          <div className="flex flex-col items-center text-center gap-6 max-w-3xl mx-auto">
+        <Section className="relative py-28 sm:py-36 lg:py-40">
+          <div className="flex flex-col items-center text-center gap-7 max-w-4xl mx-auto">
 
-            {/* Eyebrow badge */}
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium px-4 py-1.5 rounded-full">
-              <MdOutlineAgriculture className="text-lg" />
-              India's Crop Marketplace
+            {/* Eyebrow pill */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/25 text-white/90 text-sm font-semibold px-5 py-2 rounded-full shadow-inner">
+              <MdOutlineAgriculture className="text-lg text-green-300" />
+              India's Direct Farm-to-Market Platform
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             </div>
 
             {/* Headline */}
             <h1
               id="hero-heading"
-              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.1] tracking-tight"
             >
-              Farm Fresh Crops,{" "}
-              <span className="text-primary-200">Direct to You</span>
+              Connect Farms.{" "}
+              <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text"
+                    style={{ backgroundImage: "linear-gradient(90deg, #86efac, #4ade80, #bbf7d0)" }}>
+                Feed India.
+              </span>
             </h1>
 
-            {/* Subheading */}
-            <p className="text-lg sm:text-xl text-primary-100 max-w-2xl leading-relaxed">
-              Connecting farmers, buyers, and transporters across India.
-              No middlemen. Fair prices. Fresh produce delivered to your door.
+            {/* Sub-heading */}
+            <p className="text-lg sm:text-xl text-green-100/90 max-w-2xl leading-relaxed font-light">
+              Buy and sell farm-fresh crops directly — no agents, no markups.
+              Farmers get better prices. Buyers get fresher produce.
             </p>
 
-            {/* CTA Buttons — role-aware */}
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
+            {/* CTA row */}
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-1">
               <Link
                 to={ROUTES.CROPS}
-                className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold px-7 py-3.5 rounded-xl hover:bg-primary-50 transition-colors shadow-lg hover:shadow-xl text-base"
+                className="inline-flex items-center gap-2.5 bg-white text-green-800 font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-green-50 active:scale-95 transition-all duration-150 text-base"
               >
                 <FaShoppingBasket className="text-base" />
                 Explore Marketplace
               </Link>
 
-              {/* Show "List Your Crops" only for farmers; hide for all other roles and guests */}
-              {(!isAuthenticated || user?.role === "farmer") && (
+              {showSecondaryCTA && (
                 <Link
                   to={isAuthenticated ? ROUTES.CROP_CREATE : ROUTES.REGISTER}
-                  className="inline-flex items-center gap-2 bg-primary-800 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-primary-900 transition-colors border border-white/20 text-base"
+                  className="inline-flex items-center gap-2.5 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm text-white font-bold px-8 py-4 rounded-xl border border-white/30 hover:border-white/50 active:scale-95 transition-all duration-150 text-base"
                 >
                   <FaSeedling className="text-base" />
                   {isAuthenticated ? "List Your Crops" : "Sell Your Crops"}
@@ -282,59 +335,54 @@ const HomePage = () => {
               )}
             </div>
 
-            {/* Trust signals */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-4 text-primary-100 text-sm">
-              <span className="flex items-center gap-1.5">
-                <HiOutlineBadgeCheck className="text-base text-primary-200" />
-                Verified Farmers
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FaShieldAlt className="text-base text-primary-200" />
-                Secure Payments
-              </span>
-              <span className="flex items-center gap-1.5">
-                <FaTruck className="text-base text-primary-200" />
-                Fast Delivery
-              </span>
+            {/* Trust strip */}
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-3 text-green-200 text-sm font-medium">
+              {[
+                { icon: <HiOutlineBadgeCheck />, text: "Verified Farmers" },
+                { icon: <FaShieldAlt />, text: "Secure Payments" },
+                { icon: <FaTruck />, text: "Fast Delivery" },
+                { icon: <FaCheckCircle />, text: "No Middlemen" },
+              ].map(({ icon, text }) => (
+                <span key={text} className="flex items-center gap-1.5">
+                  <span className="text-green-400">{icon}</span>
+                  {text}
+                </span>
+              ))}
             </div>
           </div>
         </Section>
 
-        {/* Wave divider */}
-        <div className="relative h-12 overflow-hidden" aria-hidden="true">
-          <svg
-            viewBox="0 0 1440 48"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="absolute bottom-0 w-full"
-            preserveAspectRatio="none"
-          >
-            <path d="M0 48L60 42C120 36 240 24 360 18C480 12 600 12 720 16C840 20 960 28 1080 32C1200 36 1320 36 1380 36L1440 36V48H0Z" fill="#f9fafb" />
+        {/* Curved wave separator */}
+        <div className="relative h-16 overflow-hidden" aria-hidden="true">
+          <svg viewBox="0 0 1440 64" fill="none" xmlns="http://www.w3.org/2000/svg"
+               className="absolute bottom-0 w-full" preserveAspectRatio="none">
+            <path d="M0 64L80 56C160 48 320 32 480 24C640 16 800 16 960 22C1120 28 1280 40 1360 46L1440 52V64H0Z" fill="#f9fafb"/>
           </svg>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          2. STATISTICS SECTION — live from /api/v1/stats
+          STATISTICS — live from /api/v1/stats
       ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-gray-50 py-16" aria-labelledby="stats-heading">
+      <section className="bg-gray-50 py-16" aria-label="Platform statistics">
         <Section>
-          <h2 id="stats-heading" className="sr-only">Platform statistics</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {statsLoading
               ? Array.from({ length: 4 }).map((_, i) => <StatSkeleton key={i} />)
-              : STAT_CARDS.map(({ icon, value, label }) => (
+              : STAT_CARDS.map(({ icon, value, label, iconBg }) => (
                   <div
                     key={label}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6
+                               flex flex-col items-center gap-3 text-center
+                               hover:shadow-md hover:-translate-y-1 transition-all duration-200 group"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-primary-50 flex items-center justify-center text-primary-600">
+                    <div className={`w-13 h-13 rounded-xl ${iconBg} flex items-center justify-center text-white shadow-sm w-12 h-12`}>
                       {icon}
                     </div>
-                    <p className="text-3xl font-extrabold text-gray-900 tabular-nums">
+                    <p className="text-3xl font-extrabold text-gray-900 tabular-nums tracking-tight">
                       {value}
                     </p>
-                    <p className="text-sm font-medium text-gray-500">{label}</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
                   </div>
                 ))
             }
@@ -343,28 +391,30 @@ const HomePage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          3. CATEGORIES SECTION
+          CATEGORIES
       ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-20" aria-labelledby="categories-heading">
+      <section className="bg-white py-20 sm:py-24" aria-labelledby="categories-heading">
         <Section>
           <SectionHeader
-            eyebrow="Browse by Category"
+            eyebrow="Shop by Category"
             title="What are you looking for?"
-            subtitle="Explore fresh produce across categories, sourced directly from farms across India."
+            subtitle="From staple grains to seasonal fruits — explore produce sourced directly from farmers across India."
           />
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {CATEGORIES.map(({ icon, label, value, bg, border, hover }) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {CATEGORIES.map(({ icon, label, value, colour, bg, border, ring, iconBg }) => (
               <Link
                 key={label}
                 to={`${ROUTES.CROPS}?category=${value}`}
-                className={`flex flex-col items-center gap-3 p-5 rounded-2xl border ${bg} ${border} ${hover} transition-all duration-200 hover:-translate-y-1 hover:shadow-md group cursor-pointer`}
+                className={`flex flex-col items-center gap-3.5 p-5 rounded-2xl border ${bg} ${border} ${ring}
+                            transition-all duration-200 hover:-translate-y-1.5 hover:shadow-lg group cursor-pointer`}
                 aria-label={`Browse ${label}`}
               >
-                <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-200">
+                <div className={`w-16 h-16 rounded-2xl ${iconBg} ${colour} flex items-center justify-center
+                                 shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-200`}>
                   {icon}
                 </div>
-                <p className="font-semibold text-gray-800 text-sm text-center">{label}</p>
+                <p className="font-bold text-gray-800 text-sm text-center leading-tight">{label}</p>
               </Link>
             ))}
           </div>
@@ -372,91 +422,89 @@ const HomePage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          4. FEATURED CROPS SECTION — live from /api/v1/crops/featured
+          FEATURED CROPS — live from /api/v1/crops/featured
       ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-gray-50 py-20" aria-labelledby="featured-heading">
+      <section className="bg-gray-50 py-20 sm:py-24" aria-labelledby="featured-heading">
         <Section>
           <SectionHeader
-            eyebrow="Featured Listings"
-            title="Fresh from the farm"
-            subtitle="Recently added crops from verified farmers across India."
+            eyebrow="Fresh Listings"
+            title="Just in from the farm"
+            subtitle="The latest crop listings from verified farmers, updated in real time."
           />
 
-          {/* Loading skeletons */}
           {featuredLoading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => <FeaturedSkeleton key={i} />)}
             </div>
           )}
 
-          {/* Error / empty — fall back gracefully */}
-          {!featuredLoading && (featuredError || featuredCrops.length === 0) && (
-            <div className="text-center py-12 text-gray-400">
-              <FaBoxOpen className="text-5xl mx-auto mb-4 opacity-30" />
-              <p className="text-sm">
+          {!featuredLoading && featuredEmpty && (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                <FaBoxOpen className="text-4xl text-gray-300" />
+              </div>
+              <p className="text-gray-500 text-sm">
                 No listings yet.{" "}
-                <Link to={ROUTES.CROPS} className="text-primary-600 underline">
-                  Browse the marketplace
+                <Link to={ROUTES.CROPS} className="text-primary-600 font-semibold underline underline-offset-2">
+                  Visit the marketplace
                 </Link>
                 {" "}to see all available crops.
               </p>
             </div>
           )}
 
-          {/* Live crop cards */}
           {!featuredLoading && featuredCrops.length > 0 && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {featuredCrops.map((crop) => {
                   const imageUrl   = crop.images?.[0]?.url || PLACEHOLDER;
-                  const catColour  = CATEGORY_COLOURS[crop.category] || CATEGORY_COLOURS.other;
+                  const catColour  = CATEGORY_PILL[crop.category] || CATEGORY_PILL.other;
                   const sellerName = crop.owner?.name || "Unknown Farmer";
                   const location   = [crop.location?.district, crop.location?.state]
                                        .filter(Boolean).join(", ");
-
                   return (
                     <Link
                       key={crop._id}
                       to={`/crops/${crop._id}`}
-                      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group flex flex-col"
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
+                                 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200
+                                 group flex flex-col"
                       aria-label={`View details for ${crop.cropName}`}
                     >
                       {/* Image */}
-                      <div className="relative overflow-hidden h-44 bg-gray-100 shrink-0">
+                      <div className="relative overflow-hidden h-52 bg-gray-100 shrink-0">
                         <img
                           src={imageUrl}
                           alt={crop.cropName}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           loading="lazy"
                           onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
                         />
-                        {/* Category pill */}
-                        <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm border border-gray-100 ${catColour}`}>
+                        {/* Gradient overlay for readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                        <span className={`absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full
+                                          bg-white/95 backdrop-blur-sm border border-white/50 shadow-sm ${catColour}`}>
                           {capitalise(crop.category)}
                         </span>
                       </div>
 
                       {/* Body */}
-                      <div className="p-5 flex flex-col gap-3 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base leading-snug line-clamp-1">
+                      <div className="p-5 flex flex-col gap-2.5 flex-1">
+                        <h3 className="font-bold text-gray-900 text-base leading-snug line-clamp-1">
                           {crop.cropName}
                         </h3>
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold text-primary-600 tabular-nums">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-2xl font-extrabold text-primary-600 tabular-nums">
                             {formatCurrency(crop.price)}
                           </span>
-                          <span className="text-sm text-gray-400">
+                          <span className="text-sm text-gray-400 font-normal">
                             / {crop.priceUnit || crop.unit}
                           </span>
                         </div>
-
-                        {/* Farmer + location */}
-                        <div className="flex flex-col gap-1.5 text-xs text-gray-500">
+                        <div className="flex flex-col gap-1.5 text-xs text-gray-500 mt-0.5">
                           <div className="flex items-center gap-1.5">
                             <FaLeaf className="text-primary-400 shrink-0" />
-                            <span className="truncate font-medium text-gray-700">{sellerName}</span>
+                            <span className="font-semibold text-gray-700 truncate">{sellerName}</span>
                           </div>
                           {location && (
                             <div className="flex items-center gap-1.5">
@@ -465,12 +513,13 @@ const HomePage = () => {
                             </div>
                           )}
                         </div>
-
-                        {/* CTA */}
                         <div className="mt-auto pt-3">
-                          <div className="w-full inline-flex items-center justify-center gap-2 bg-primary-50 text-primary-700 font-medium text-sm py-2.5 rounded-xl group-hover:bg-primary-600 group-hover:text-white transition-colors duration-200">
+                          <div className="w-full inline-flex items-center justify-center gap-2
+                                          bg-primary-50 text-primary-700 font-semibold text-sm py-2.5 rounded-xl
+                                          group-hover:bg-primary-600 group-hover:text-white
+                                          transition-colors duration-200">
                             View Details
-                            <FaArrowRight className="text-xs" />
+                            <FaArrowRight className="text-xs group-hover:translate-x-0.5 transition-transform" />
                           </div>
                         </div>
                       </div>
@@ -479,11 +528,10 @@ const HomePage = () => {
                 })}
               </div>
 
-              {/* View all */}
-              <div className="flex justify-center mt-10">
+              <div className="flex justify-center mt-12">
                 <Link
                   to={ROUTES.CROPS}
-                  className="inline-flex items-center gap-2 btn-secondary px-8 py-3 text-base"
+                  className="inline-flex items-center gap-2 btn-secondary px-10 py-3.5 text-base font-semibold rounded-xl shadow-sm hover:shadow-md transition-all"
                 >
                   Browse All Listings
                   <FaArrowRight className="text-sm" />
@@ -495,27 +543,41 @@ const HomePage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          5. WHY AGRICONNECT SECTION
+          WHY AGRICONNECT
       ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-20" aria-labelledby="why-heading">
+      <section className="bg-white py-20 sm:py-24" aria-labelledby="why-heading">
         <Section>
           <SectionHeader
             eyebrow="Why AgriConnect"
-            title="Built for India's farmers"
-            subtitle="We designed every feature with the farmer's needs in mind. Here's what makes us different."
+            title="Built differently, for India's farmers"
+            subtitle="Every feature is designed around what farmers and buyers actually need — not what looks good on a slide deck."
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WHY_FEATURES.map(({ icon, bg, title, desc }) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {WHY_FEATURES.map(({ icon, iconBg, badge, title, desc }) => (
               <div
                 key={title}
-                className="flex flex-col gap-4 p-6 rounded-2xl border border-gray-100 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                className="group relative flex flex-col gap-4 p-6 rounded-2xl border border-gray-100 bg-white
+                           hover:shadow-lg hover:-translate-y-1 transition-all duration-200 overflow-hidden"
               >
-                <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center`}>
-                  {icon}
+                {/* Subtle bg glow on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 to-primary-50/0
+                                group-hover:from-primary-50/60 group-hover:to-transparent
+                                transition-all duration-300 pointer-events-none rounded-2xl" />
+
+                <div className="relative flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                    {icon}
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">
+                      {badge}
+                    </span>
+                    <h3 className="font-bold text-gray-900 text-base mt-1.5">{title}</h3>
+                  </div>
                 </div>
-                <h3 className="font-bold text-gray-900 text-base">{title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+
+                <p className="relative text-sm text-gray-500 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -523,45 +585,54 @@ const HomePage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          6. CALL TO ACTION SECTION
+          CALL TO ACTION
       ══════════════════════════════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden bg-gradient-to-r from-primary-800 to-primary-600 py-20"
+        className="relative overflow-hidden py-24 sm:py-32"
+        style={{
+          background: "linear-gradient(135deg, #064e3b 0%, #065f46 40%, #047857 70%, #059669 100%)",
+        }}
         aria-labelledby="cta-heading"
       >
-        {/* Decorative blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-primary-500 rounded-full opacity-30 blur-2xl" />
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-primary-900 rounded-full opacity-40 blur-2xl" />
+        {/* Background decoration */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10"
+               style={{ background: "radial-gradient(circle, #6ee7b7 0%, transparent 65%)" }} />
+          <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-10"
+               style={{ background: "radial-gradient(circle, #34d399 0%, transparent 65%)" }} />
+          <div className="absolute inset-0 opacity-[0.04]"
+               style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         </div>
 
         <Section className="relative text-center">
-          <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
+          <div className="max-w-3xl mx-auto flex flex-col items-center gap-7">
 
-            <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-              <MdOutlineStorefront className="text-3xl text-white" />
+            <div className="w-18 h-18 rounded-2xl bg-white/10 border border-white/20
+                            flex items-center justify-center backdrop-blur-sm w-16 h-16">
+              <MdOutlineStorefront className="text-3xl text-emerald-300" />
             </div>
 
-            <h2
-              id="cta-heading"
-              className="text-3xl sm:text-4xl font-extrabold text-white leading-tight"
-            >
-              {isAuthenticated
-                ? `Welcome back, ${user?.name?.split(" ")[0]}!`
-                : "Ready to get started?"}
-            </h2>
-
-            <p className="text-primary-100 text-base max-w-lg leading-relaxed">
-              {isAuthenticated
-                ? "Head to your dashboard to manage your activity on AgriConnect."
-                : "Create your free account today. Start listing crops, browsing the marketplace, or accepting deliveries — all in one platform."}
-            </p>
+            <div>
+              <h2
+                id="cta-heading"
+                className="text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight"
+              >
+                {isAuthenticated
+                  ? `Welcome back, ${user?.name?.split(" ")[0]}!`
+                  : "The smarter way to sell crops."}
+              </h2>
+              <p className="mt-4 text-emerald-100/80 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+                {isAuthenticated
+                  ? "Head to your dashboard to manage listings, orders, and deliveries."
+                  : "Join thousands of farmers already selling direct. No commission. No hassle. Just fair prices."}
+              </p>
+            </div>
 
             <div className="flex flex-wrap items-center justify-center gap-4">
               {isAuthenticated ? (
                 <Link
                   to={ROLE_DASHBOARD[user?.role] || ROUTES.HOME}
-                  className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-primary-50 transition-colors shadow-lg text-base"
+                  className="inline-flex items-center gap-2.5 bg-white text-emerald-800 font-bold px-10 py-4 rounded-xl hover:bg-emerald-50 active:scale-95 transition-all duration-150 shadow-lg text-base"
                 >
                   <MdDashboard className="text-lg" />
                   Go to Dashboard
@@ -570,14 +641,14 @@ const HomePage = () => {
                 <>
                   <Link
                     to={ROUTES.REGISTER}
-                    className="inline-flex items-center gap-2 bg-white text-primary-700 font-semibold px-8 py-3.5 rounded-xl hover:bg-primary-50 transition-colors shadow-lg text-base"
+                    className="inline-flex items-center gap-2.5 bg-white text-emerald-800 font-bold px-10 py-4 rounded-xl hover:bg-emerald-50 active:scale-95 transition-all duration-150 shadow-lg text-base"
                   >
-                    Create Free Account
+                    Get Started Free
                     <FaArrowRight className="text-sm" />
                   </Link>
                   <Link
                     to={ROUTES.LOGIN}
-                    className="inline-flex items-center gap-2 border border-white/40 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors text-base"
+                    className="inline-flex items-center gap-2 border border-white/30 text-white font-semibold px-8 py-4 rounded-xl hover:bg-white/10 active:scale-95 transition-all duration-150 text-base backdrop-blur-sm"
                   >
                     Sign In
                   </Link>
@@ -586,9 +657,14 @@ const HomePage = () => {
             </div>
 
             {!isAuthenticated && (
-              <p className="text-primary-200 text-xs mt-2">
-                Free forever for farmers. No credit card required.
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-5 text-emerald-300/80 text-xs font-semibold mt-1">
+                {["Free to join", "No credit card", "Cancel anytime"].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <FaCheckCircle className="text-emerald-400" />
+                    {t}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </Section>
