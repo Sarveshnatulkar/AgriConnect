@@ -5,18 +5,18 @@ const authRoutes      = require("./authRoutes");
 const cropRoutes      = require("./cropRoutes");
 const orderRoutes     = require("./orderRoutes");
 const transportRoutes = require("./transportRoutes");
+const adminRoutes     = require("./adminRoutes");
 
 /**
  * Root API router — mounted at /api/v1 in app.js
  *
- * Current:
- *   Phase 2: /auth
- *   Phase 3: /crops
- *   Phase 7: /orders
- *   Phase 8: /transport
+ * Phase 2: /auth
+ * Phase 3: /crops
+ * Phase 7: /orders
+ * Phase 8: /transport
+ * Phase 14: /admin
  */
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
 router.get("/health", (req, res) => {
   res.status(200).json({
     success:     true,
@@ -26,10 +26,10 @@ router.get("/health", (req, res) => {
   });
 });
 
-// ─── Feature Routes ───────────────────────────────────────────────────────────
 router.use("/auth",      authRoutes);
 router.use("/crops",     cropRoutes);
 router.use("/orders",    orderRoutes);
 router.use("/transport", transportRoutes);
+router.use("/admin",     adminRoutes);
 
 module.exports = router;

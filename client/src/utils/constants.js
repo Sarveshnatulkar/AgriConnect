@@ -44,6 +44,13 @@ export const ROUTES = {
   TRANSPORT_DASHBOARD: "/dashboard/transporter",
   TRANSPORT_AVAILABLE: "/transport",
   TRANSPORT_MY:        "/transport/my",
+
+  // Admin
+  ADMIN_DASHBOARD:        "/admin",
+  ADMIN_USERS:            "/admin/users",
+  ADMIN_CROPS:            "/admin/crops",
+  ADMIN_ORDERS:           "/admin/orders",
+  ADMIN_TRANSPORT:        "/admin/transport",
 };
 
 // ─── Role → Dashboard mapping ─────────────────────────────────────────────────
