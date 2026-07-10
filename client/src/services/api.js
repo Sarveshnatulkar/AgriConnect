@@ -1,35 +1,55 @@
 import axios from "axios";
 
 /**
- * Axios instance — the single HTTP client used across the entire frontend.
+ * Axios instance — the single HTTP client for the entire frontend.
  *
- * Why a shared instance?
- *  - One place to set baseURL, headers, and interceptors
- *  - Consistent error handling across all API calls
- *  - Easy to update the base URL for different environments
+ * Design decisions:
  *
- * `withCredentials: true` tells Axios to send cookies on every request.
- * This is required for our HTTP-only JWT cookie to be included.
+ * 1. `withCredentials: true`
+ *    Required so the browser sends the HTTP-only JWT cookie on every request,
+ *    including cross-origin requests to the Render-hosted backend.
+ *
+ * 2. baseURL reads from VITE_API_BASE_URL
+ *    In development, Vite proxies /api → localhost:5000, so the value is
+ *    just "/api/v1". In production it becomes the full Render backend URL.
+ *
+ * 3. Response interceptor handles 401 globally
+ *    When the server returns 401 (expired cookie / invalid token), we
+ *    redirect to /login without every single component needing to handle it.
+ *    We use window.location instead of React Router navigate() because this
+ *    module lives outside the React component tree.
  */
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api/v1",
-  withCredentials: true,          // Send cookies cross-origin
+  baseURL:         import.meta.env.VITE_API_BASE_URL || "/api/v1",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-/**
- * Response interceptor — global error handling.
- * If the server returns 401 (token expired / not logged in),
- * we can redirect to login here in Phase 2.
- */
+// ─── Response Interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
+  // Success: pass the response straight through
   (response) => response,
+
+  // Error: normalise the error message and handle 401 globally
   (error) => {
-    const message =
-      error.response?.data?.message || error.message || "Something went wrong";
-    // In Phase 2 we will handle 401 redirects here
+    const status  = error.response?.status;
+    const message = error.response?.data?.message
+      || error.message
+      || "Something went wrong";
+
+    // 401 = session expired or not logged in.
+    // Redirect to login, but avoid redirect loops if we're already there.
+    if (status === 401) {
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/login" && currentPath !== "/register") {
+        window.location.href = "/login";
+      }
+    }
+
+    // Reject with a plain Error so callers get a consistent `.message` string
     return Promise.reject(new Error(message));
   }
 );
