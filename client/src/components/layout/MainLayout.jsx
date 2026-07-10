@@ -31,17 +31,17 @@ import Footer from "./Footer";
 const MainLayout = () => {
   const { pathname } = useLocation();
 
-  // Auth pages: no horizontal padding / max-width so the form card
-  // can be truly centred without fighting the layout container.
-  const isAuthPage = ["/login", "/register"].includes(pathname);
+  // Pages that manage their own full-width layout internally.
+  // Auth pages need a centred form card; the home page needs full-bleed sections.
+  const isFullWidthPage = ["/", "/login", "/register"].includes(pathname);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
 
       <main className="flex-1 w-full">
-        {isAuthPage ? (
-          // Auth pages manage their own centering
+        {isFullWidthPage ? (
+          // These pages control their own internal layout
           <Outlet />
         ) : (
           // All other pages get consistent gutters and max width

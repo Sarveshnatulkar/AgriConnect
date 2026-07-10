@@ -142,7 +142,7 @@ const Navbar = () => {
                   to={ROUTES.REGISTER}
                   className="btn-primary text-sm py-2 px-4"
                 >
-                  Get Started
+                  Register
                 </Link>
               </>
             ) : (
@@ -301,7 +301,7 @@ const Navbar = () => {
                     onClick={closeMobile}
                     className="btn-primary text-sm text-center"
                   >
-                    Get Started
+                    Register
                   </NavLink>
                 </div>
               ) : (
