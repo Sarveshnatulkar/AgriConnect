@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const authRoutes = require("./authRoutes");
+const cropRoutes = require("./cropRoutes");
 
 /**
  * Root API router — mounted at /api/v1 in app.js
@@ -11,9 +12,9 @@ const authRoutes = require("./authRoutes");
  *
  * Current:
  *   Phase 2: /auth
+ *   Phase 3: /crops
  *
  * Upcoming:
- *   Phase 3: /crops
  *   Phase 7: /orders
  *   Phase 8: /deliveries
  *   Phase 9: /messages
@@ -30,6 +31,7 @@ router.get("/health", (req, res) => {
 });
 
 // ─── Feature Routes ───────────────────────────────────────────────────────────
-router.use("/auth", authRoutes);
+router.use("/auth",  authRoutes);
+router.use("/crops", cropRoutes);
 
 module.exports = router;
