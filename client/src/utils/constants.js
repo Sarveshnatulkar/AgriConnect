@@ -32,6 +32,9 @@ export const ROUTES = {
   CROP_DETAIL:   "/crops/:id",
   CROP_CREATE:   "/crops/new",
   CROP_EDIT:     "/crops/:id/edit",
+
+  // Buyer
+  WISHLIST:      "/wishlist",
 };
 
 // ─── Role → Dashboard mapping ─────────────────────────────────────────────────

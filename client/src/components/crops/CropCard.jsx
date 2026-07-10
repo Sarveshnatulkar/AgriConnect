@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaLeaf, FaBoxOpen, FaCalendarAlt } from "react-icons/fa";
+import { HiHeart, HiOutlineHeart } from "react-icons/hi";
+import useWishlist from "../../hooks/useWishlist";
 import { capitalise, formatDate, formatCurrency } from "../../utils/helpers";
 
 /**
@@ -7,19 +10,10 @@ import { capitalise, formatDate, formatCurrency } from "../../utils/helpers";
  * Props:
  *  @param {Object} crop  - A crop document from GET /api/v1/crops
  *
- * Data mapping (field → source):
- *  image        → crop.images[0]?.url  (fallback to placeholder)
- *  crop name    → crop.cropName
- *  category     → crop.category        (capitalised)
- *  quantity     → crop.quantity + crop.unit
- *  price        → crop.price + crop.priceUnit
- *  seller name  → crop.owner.name
- *  location     → crop.location.district + crop.location.state
- *  harvest date → crop.harvestDate     (formatted, omitted if null)
- *
- * Click behaviour:
- *  TODO: Navigate to /crops/:id when CropDetailPage is built.
- *        For now the card is visually interactive but does not navigate.
+ * Features added in buyer module:
+ *  - Clicking the card (or "View Details" button) navigates to /crops/:id
+ *  - Heart icon (top-right of image) toggles wishlist; stops event propagation
+ *    so it doesn't also trigger card navigation
  */
 
 // ── Category colour mapping ────────────────────────────────────────────────────
@@ -39,7 +33,11 @@ const PLACEHOLDER_IMAGE =
   "https://placehold.co/400x260/f0fdf4/16a34a?text=No+Image";
 
 const CropCard = ({ crop }) => {
+  const navigate = useNavigate();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+
   const {
+    _id,
     cropName,
     category,
     quantity,
@@ -58,13 +56,25 @@ const CropCard = ({ crop }) => {
   const district      = location?.district || "";
   const state         = location?.state    || "";
   const locationText  = [district, state].filter(Boolean).join(", ");
+  const wishlisted    = isWishlisted(_id);
+
+  const goToDetail = () => navigate(`/crops/${_id}`);
+
+  const handleWishlist = (e) => {
+    e.stopPropagation(); // prevent card click from also navigating
+    toggleWishlist(crop);
+  };
 
   return (
     <article
       className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden
                  hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group
-                 flex flex-col"
-      // TODO: Add onClick={() => navigate(`/crops/${crop._id}`)} when CropDetailPage is built
+                 flex flex-col cursor-pointer"
+      onClick={goToDetail}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") goToDetail(); }}
+      aria-label={`View details for ${cropName}`}
     >
       {/* ── Image ──────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden h-44 bg-gray-100 shrink-0">
@@ -73,10 +83,7 @@ const CropCard = ({ crop }) => {
           alt={cropName}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-          onError={(e) => {
-            // Silently fall back if the Cloudinary URL is broken
-            e.currentTarget.src = PLACEHOLDER_IMAGE;
-          }}
+          onError={(e) => { e.currentTarget.src = PLACEHOLDER_IMAGE; }}
         />
 
         {/* Category pill — top left */}
@@ -88,6 +95,25 @@ const CropCard = ({ crop }) => {
           <span className={`w-1.5 h-1.5 rounded-full ${categoryStyle.dot}`} />
           {capitalise(category)}
         </span>
+
+        {/* Wishlist heart — top right */}
+        <button
+          type="button"
+          onClick={handleWishlist}
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center
+                      justify-center shadow-sm backdrop-blur-sm transition-all duration-150
+                      ${wishlisted
+                        ? "bg-red-500 text-white hover:bg-red-600"
+                        : "bg-white/90 text-gray-400 hover:bg-white hover:text-red-500"
+                      }`}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={wishlisted}
+        >
+          {wishlisted
+            ? <HiHeart className="text-base" />
+            : <HiOutlineHeart className="text-base" />
+          }
+        </button>
       </div>
 
       {/* ── Body ───────────────────────────────────────────────────── */}
@@ -142,20 +168,16 @@ const CropCard = ({ crop }) => {
           </div>
         )}
 
-        {/* CTA — spacer pushes it to bottom */}
+        {/* CTA button */}
         <div className="mt-auto pt-3">
-          <button
-            type="button"
-            className="w-full py-2.5 rounded-xl text-sm font-semibold
+          <div
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-center
                        bg-primary-50 text-primary-700
-                       hover:bg-primary-600 hover:text-white
-                       transition-colors duration-200 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
-            // TODO: Navigate to /crops/${crop._id} when CropDetailPage is built
-            aria-label={`View details for ${cropName}`}
+                       group-hover:bg-primary-600 group-hover:text-white
+                       transition-colors duration-200"
           >
             View Details
-          </button>
+          </div>
         </div>
 
       </div>

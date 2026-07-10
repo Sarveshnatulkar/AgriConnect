@@ -12,7 +12,9 @@ import NotFoundPage     from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 // Pages — marketplace (any authenticated user)
-import MarketplacePage from "./pages/crops/MarketplacePage";
+import MarketplacePage  from "./pages/crops/MarketplacePage";
+import CropDetailPage   from "./pages/crops/CropDetailPage";
+import WishlistPage     from "./pages/crops/WishlistPage";
 
 // Pages — farmer module
 import MyCropsPage  from "./pages/crops/MyCropsPage";
@@ -71,7 +73,9 @@ function App() {
 
         {/* ── Any authenticated user ────────────────────────────────── */}
         <Route element={<ProtectedRoute />}>
-          <Route path={ROUTES.CROPS} element={<MarketplacePage />} />
+          <Route path={ROUTES.CROPS}       element={<MarketplacePage />} />
+          <Route path={ROUTES.CROP_DETAIL} element={<CropDetailPage />} />
+          <Route path={ROUTES.WISHLIST}    element={<WishlistPage />} />
         </Route>
 
         {/* ── Farmer (+ admin) ──────────────────────────────────────── */}

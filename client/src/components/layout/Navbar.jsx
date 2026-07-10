@@ -7,9 +7,12 @@ import {
   HiOutlineLogout,
   HiOutlineViewGrid,
   HiOutlineUser,
+  HiOutlineHeart,
+  HiHeart,
 } from "react-icons/hi";
 import { MdOutlineAgriculture } from "react-icons/md";
 import useAuth from "../../hooks/useAuth";
+import useWishlist from "../../hooks/useWishlist";
 import { ROUTES, ROLE_DASHBOARD } from "../../utils/constants";
 import { getInitials, capitalise } from "../../utils/helpers";
 
@@ -57,6 +60,7 @@ const ROLE_COLOURS = {
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { count: wishlistCount } = useWishlist();
   const navigate = useNavigate();
 
   const [mobileOpen,   setMobileOpen]   = useState(false);
@@ -120,9 +124,37 @@ const Navbar = () => {
             <NavLink to={ROUTES.CROPS} className={navLinkClass}>Marketplace</NavLink>
 
             {isAuthenticated && (
-              <NavLink to={dashboardPath} className={navLinkClass}>
-                Dashboard
-              </NavLink>
+              <>
+                {/* Wishlist icon with count badge */}
+                <NavLink
+                  to={ROUTES.WISHLIST}
+                  className={({ isActive }) =>
+                    `relative flex items-center gap-1 transition-colors duration-150
+                    ${isActive ? "text-red-500" : "text-gray-600 hover:text-red-500"}`
+                  }
+                  aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ""}`}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive || wishlistCount > 0
+                        ? <HiHeart className="text-xl text-red-500" />
+                        : <HiOutlineHeart className="text-xl" />
+                      }
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full
+                                         bg-red-500 text-white text-[10px] font-bold
+                                         flex items-center justify-center leading-none">
+                          {wishlistCount > 9 ? "9+" : wishlistCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+
+                <NavLink to={dashboardPath} className={navLinkClass}>
+                  Dashboard
+                </NavLink>
+              </>
             )}
           </nav>
 
@@ -272,17 +304,40 @@ const Navbar = () => {
             </NavLink>
 
             {isAuthenticated && (
-              <NavLink
-                to={dashboardPath}
-                onClick={closeMobile}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"
-                  }`
-                }
-              >
-                Dashboard
-              </NavLink>
+              <>
+                <NavLink
+                  to={ROUTES.WISHLIST}
+                  onClick={closeMobile}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? "bg-red-50 text-red-600" : "text-gray-700 hover:bg-gray-50"
+                    }`
+                  }
+                >
+                  <span className="flex items-center gap-2 flex-1">
+                    <HiOutlineHeart className="text-base text-red-400" />
+                    Wishlist
+                    {wishlistCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-bold
+                                       px-1.5 py-0.5 rounded-full">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </span>
+                </NavLink>
+
+                <NavLink
+                  to={dashboardPath}
+                  onClick={closeMobile}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"
+                    }`
+                  }
+                >
+                  Dashboard
+                </NavLink>
+              </>
             )}
 
             {/* Auth section */}
