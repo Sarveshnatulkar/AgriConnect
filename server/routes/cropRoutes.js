@@ -7,6 +7,7 @@ const {
   getCropById,
   updateCrop,
   deleteCrop,
+  getFeaturedCrops,
 } = require("../controllers/cropController");
 
 const { protect }   = require("../middlewares/authMiddleware");
@@ -15,24 +16,21 @@ const { authorize } = require("../middlewares/roleMiddleware");
 /**
  * Crop Routes — mounted at /api/v1/crops in routes/index.js
  *
- * Middleware chain explanation:
- *
- *  protect              → verifies JWT cookie, attaches req.user
- *  authorize("farmer")  → checks req.user.role === "farmer"
- *
  * Route summary:
  *
- *  GET    /api/v1/crops         → getAllCrops   (any authenticated user)
- *  POST   /api/v1/crops         → createCrop   (farmer only)
- *  GET    /api/v1/crops/:id     → getCropById  (any authenticated user)
- *  PUT    /api/v1/crops/:id     → updateCrop   (owner or admin — checked in controller)
- *  DELETE /api/v1/crops/:id     → deleteCrop   (owner or admin — checked in controller)
+ *  GET    /api/v1/crops/featured → getFeaturedCrops (public — no auth)
+ *  GET    /api/v1/crops          → getAllCrops       (any authenticated user)
+ *  POST   /api/v1/crops          → createCrop        (farmer only)
+ *  GET    /api/v1/crops/:id      → getCropById       (any authenticated user)
+ *  PUT    /api/v1/crops/:id      → updateCrop        (owner or admin)
+ *  DELETE /api/v1/crops/:id      → deleteCrop        (owner or admin)
  *
- * Why is updateCrop/deleteCrop not guarded by authorize("farmer") here?
- *   Because admins also need access. The ownership check happens inside the
- *   controller after fetching the document — that's the only place where we
- *   know both the requester's role AND the crop's owner ID.
+ * IMPORTANT: /featured must be declared BEFORE /:id so Express does not
+ * interpret "featured" as a MongoDB ObjectId parameter.
  */
+
+// ── Public route — no auth middleware ─────────────────────────────────────────
+router.get("/featured", getFeaturedCrops);
 
 // ── Collection routes ──────────────────────────────────────────────────────────
 router

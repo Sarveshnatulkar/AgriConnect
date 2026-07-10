@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Crop = require("../models/Crop");
+const User = require("../models/User");
 
 /**
  * Crop Controller — createCrop, getAllCrops, getCropById, updateCrop, deleteCrop
@@ -404,10 +405,59 @@ const deleteCrop = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET FEATURED CROPS ───────────────────────────────────────────────────────
+/**
+ * @desc    Get up to 6 recently-added available crops for the homepage.
+ *          Public endpoint — no authentication required.
+ * @route   GET /api/v1/crops/featured
+ * @access  Public
+ */
+const getFeaturedCrops = asyncHandler(async (req, res) => {
+  const crops = await Crop.find({ isAvailable: true })
+    .populate("owner", "name")
+    .sort({ createdAt: -1 })
+    .limit(6);
+
+  res.status(200).json({
+    success: true,
+    count: crops.length,
+    data: { crops },
+  });
+});
+
+// ─── GET PLATFORM STATS ───────────────────────────────────────────────────────
+/**
+ * @desc    Return live platform statistics for the homepage hero section.
+ *          Public endpoint — no authentication required.
+ * @route   GET /api/v1/stats
+ * @access  Public
+ */
+const getPlatformStats = asyncHandler(async (req, res) => {
+  const [farmerCount, buyerCount, totalListings, statesList] =
+    await Promise.all([
+      User.countDocuments({ role: "farmer", isActive: true }),
+      User.countDocuments({ role: "buyer",  isActive: true }),
+      Crop.countDocuments({ isAvailable: true }),
+      Crop.distinct("location.state", { isAvailable: true }),
+    ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      farmers:  farmerCount,
+      buyers:   buyerCount,
+      listings: totalListings,
+      states:   statesList.length,
+    },
+  });
+});
+
 module.exports = {
   createCrop,
   getAllCrops,
   getCropById,
   updateCrop,
   deleteCrop,
+  getFeaturedCrops,
+  getPlatformStats,
 };

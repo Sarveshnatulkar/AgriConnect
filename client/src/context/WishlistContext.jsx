@@ -1,47 +1,46 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import useAuth from "../hooks/useAuth";
 
 /**
- * WishlistContext — frontend-only wishlist backed by localStorage.
+ * WishlistContext — per-user wishlist backed by localStorage.
  *
  * Storage strategy:
- *   Key:   "agri_wishlist"
- *   Value: JSON array of full crop objects (not just IDs).
+ *   Key:   "agri_wishlist_<userId>"   ← scoped to the logged-in user's ID
+ *   Value: JSON array of full crop objects.
+ *
+ * Why per-user keys?
+ *   Without scoping, logging in as a different account would show the
+ *   previous user's saved crops. Each user now gets an isolated wishlist.
+ *   When the user logs out (userId becomes null) the wishlist empties in
+ *   memory but the localStorage data is preserved for when they log back in.
  *
  * Why store full objects instead of just IDs?
- *   The Wishlist page renders without any API call. Storing the full crop
- *   object means the page is instant and works offline.
+ *   The Wishlist page renders instantly without any API call.
  *
  * Known tradeoff:
- *   If a farmer deletes a crop, the wishlisted copy remains in localStorage
- *   until the user removes it. The WishlistPage notes this to the user.
- *   A production-grade implementation would validate IDs against the API
- *   on page load — that's a straightforward future enhancement.
- *
- * Exposed via context:
- *   wishlist        — current array of saved crop objects
- *   toggleWishlist  — add if absent, remove if present (by _id)
- *   isWishlisted    — boolean check by crop._id
- *   clearWishlist   — remove all saved crops
- *   count           — number of wishlisted items (for badge)
+ *   If a farmer updates or deletes a listing, the cached copy in localStorage
+ *   reflects the old data until the user removes and re-adds it.
  */
 
-const LS_KEY = "agri_wishlist";
+const BASE_KEY = "agri_wishlist";
 
-// ── Safe localStorage helpers ─────────────────────────────────────────────────
-const readFromStorage = () => {
+// ── Storage helpers ───────────────────────────────────────────────────────────
+const storageKey = (userId) => (userId ? `${BASE_KEY}_${userId}` : BASE_KEY);
+
+const readFromStorage = (userId) => {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(storageKey(userId));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 };
 
-const writeToStorage = (items) => {
+const writeToStorage = (userId, items) => {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(items));
+    localStorage.setItem(storageKey(userId), JSON.stringify(items));
   } catch {
-    // localStorage quota exceeded or private browsing restriction — fail silently
+    // Quota exceeded or private browsing — fail silently
   }
 };
 
@@ -49,20 +48,32 @@ const writeToStorage = (items) => {
 const WishlistContext = createContext(null);
 
 export const WishlistProvider = ({ children }) => {
-  // Initialise from localStorage so state survives page refresh
-  const [wishlist, setWishlist] = useState(() => readFromStorage());
+  const { user } = useAuth();
+  const userId   = user?._id || null;
+
+  // Initialise from the correct per-user key
+  const [wishlist, setWishlist] = useState(() => readFromStorage(userId));
+
+  // Re-load the correct wishlist whenever the logged-in user changes
+  // (login, logout, or switch account in the same browser)
+  useEffect(() => {
+    setWishlist(readFromStorage(userId));
+  }, [userId]);
 
   // ── Toggle ────────────────────────────────────────────────────────────────
-  const toggleWishlist = useCallback((crop) => {
-    setWishlist((prev) => {
-      const exists = prev.some((c) => c._id === crop._id);
-      const next   = exists
-        ? prev.filter((c) => c._id !== crop._id)
-        : [...prev, crop];
-      writeToStorage(next);
-      return next;
-    });
-  }, []);
+  const toggleWishlist = useCallback(
+    (crop) => {
+      setWishlist((prev) => {
+        const exists = prev.some((c) => c._id === crop._id);
+        const next   = exists
+          ? prev.filter((c) => c._id !== crop._id)
+          : [...prev, crop];
+        writeToStorage(userId, next);
+        return next;
+      });
+    },
+    [userId]
+  );
 
   // ── Check ─────────────────────────────────────────────────────────────────
   const isWishlisted = useCallback(
@@ -70,20 +81,23 @@ export const WishlistProvider = ({ children }) => {
     [wishlist]
   );
 
-  // ── Clear ─────────────────────────────────────────────────────────────────
+  // ── Clear all ─────────────────────────────────────────────────────────────
   const clearWishlist = useCallback(() => {
     setWishlist([]);
-    writeToStorage([]);
-  }, []);
+    writeToStorage(userId, []);
+  }, [userId]);
 
-  // ── Remove single item (used by WishlistPage) ─────────────────────────────
-  const removeFromWishlist = useCallback((cropId) => {
-    setWishlist((prev) => {
-      const next = prev.filter((c) => c._id !== cropId);
-      writeToStorage(next);
-      return next;
-    });
-  }, []);
+  // ── Remove single item ────────────────────────────────────────────────────
+  const removeFromWishlist = useCallback(
+    (cropId) => {
+      setWishlist((prev) => {
+        const next = prev.filter((c) => c._id !== cropId);
+        writeToStorage(userId, next);
+        return next;
+      });
+    },
+    [userId]
+  );
 
   const value = {
     wishlist,

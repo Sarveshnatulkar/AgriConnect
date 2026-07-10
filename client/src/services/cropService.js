@@ -15,28 +15,8 @@ import api from "./api";
 /**
  * GET /api/v1/crops (with query params)
  * Supports server-side search, filters, sort, and pagination.
- *
- * @param {Object} params
- *   keyword    {string}
- *   category   {string}
- *   state      {string}
- *   district   {string}
- *   minPrice   {number}
- *   maxPrice   {number}
- *   sort       {string}  "latest" | "price_asc" | "price_desc" | "harvest"
- *   page       {number}
- *   limit      {number}
- *
- * Response shape:
- *   {
- *     success: boolean,
- *     count: number,
- *     pagination: { currentPage, totalPages, totalResults, hasNextPage, hasPreviousPage, limit },
- *     data: { crops: Crop[] }
- *   }
  */
 export const fetchCrops = async (params = {}) => {
-  // Strip empty/undefined values so the URL stays clean
   const cleaned = Object.fromEntries(
     Object.entries(params).filter(
       ([, v]) => v !== undefined && v !== null && v !== ""
@@ -47,8 +27,7 @@ export const fetchCrops = async (params = {}) => {
 };
 
 /**
- * GET /api/v1/crops (no params — used by MyCropsPage which filters client-side)
- * Kept for backwards compatibility.
+ * GET /api/v1/crops (no params — used by MyCropsPage)
  */
 export const fetchAllCrops = async () => {
   const response = await api.get("/crops");
@@ -56,9 +35,27 @@ export const fetchAllCrops = async () => {
 };
 
 /**
+ * GET /api/v1/crops/featured
+ * Returns up to 6 recently-listed available crops for the homepage.
+ * Public endpoint — no auth cookie required.
+ */
+export const fetchFeaturedCrops = async () => {
+  const response = await api.get("/crops/featured");
+  return response.data;
+};
+
+/**
+ * GET /api/v1/stats
+ * Returns live platform statistics: farmers, buyers, listings, states.
+ * Public endpoint — no auth cookie required.
+ */
+export const fetchPlatformStats = async () => {
+  const response = await api.get("/stats");
+  return response.data;
+};
+
+/**
  * GET /api/v1/crops/:id
- * Returns a single crop by MongoDB ObjectId.
- * @param {string} id
  */
 export const fetchCropById = async (id) => {
   const response = await api.get(`/crops/${id}`);
@@ -69,11 +66,6 @@ export const fetchCropById = async (id) => {
 
 /**
  * POST /api/v1/crops
- * Creates a new crop listing. Farmer only.
- *
- * @param {Object} cropData - Must include: cropName, category, quantity, unit,
- *                            price, location.state, location.district
- *                            Optional: description, harvestDate, images
  */
 export const createCrop = async (cropData) => {
   const response = await api.post("/crops", cropData);
@@ -84,11 +76,6 @@ export const createCrop = async (cropData) => {
 
 /**
  * PUT /api/v1/crops/:id
- * Updates an existing crop. Owner or admin only.
- * Only sends fields that are present in `updates` (partial update).
- *
- * @param {string} id
- * @param {Object} updates - Any subset of crop fields
  */
 export const updateCrop = async (id, updates) => {
   const response = await api.put(`/crops/${id}`, updates);
@@ -99,9 +86,6 @@ export const updateCrop = async (id, updates) => {
 
 /**
  * DELETE /api/v1/crops/:id
- * Hard-deletes a crop. Owner or admin only.
- *
- * @param {string} id
  */
 export const deleteCrop = async (id) => {
   const response = await api.delete(`/crops/${id}`);
@@ -112,27 +96,9 @@ export const deleteCrop = async (id) => {
 
 /**
  * Uploads a single image file directly to Cloudinary from the browser.
- *
- * Why upload from the browser instead of the backend?
- *  - No file storage needed on the server
- *  - Reduces backend load and eliminates multer complexity
- *  - Cloudinary receives the file directly — no round-trip through Express
- *  - Standard production pattern for JAMstack / MERN apps
- *
- * Requires two env vars:
- *   VITE_CLOUDINARY_CLOUD_NAME   — your Cloudinary cloud name
- *   VITE_CLOUDINARY_UPLOAD_PRESET — an UNSIGNED upload preset (created in
- *                                    Cloudinary dashboard → Settings → Upload)
- *
- * Returns:
- *   { url: string, publicId: string }  — ready to store in the crop.images array
- *
- * @param {File} file - A browser File object from an <input type="file">
- * @returns {Promise<{ url: string, publicId: string }>}
- * @throws {Error} if env vars are missing or upload fails
  */
 export const uploadImageToCloudinary = async (file) => {
-  const cloudName   = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const cloudName    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   if (!cloudName || cloudName === "your_cloud_name") {
