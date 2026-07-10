@@ -13,9 +13,42 @@ import api from "./api";
 // ─── READ ─────────────────────────────────────────────────────────────────────
 
 /**
- * GET /api/v1/crops
- * Returns all available crops (isAvailable: true for regular users).
- * Admins see all regardless of availability.
+ * GET /api/v1/crops (with query params)
+ * Supports server-side search, filters, sort, and pagination.
+ *
+ * @param {Object} params
+ *   keyword    {string}
+ *   category   {string}
+ *   state      {string}
+ *   district   {string}
+ *   minPrice   {number}
+ *   maxPrice   {number}
+ *   sort       {string}  "latest" | "price_asc" | "price_desc" | "harvest"
+ *   page       {number}
+ *   limit      {number}
+ *
+ * Response shape:
+ *   {
+ *     success: boolean,
+ *     count: number,
+ *     pagination: { currentPage, totalPages, totalResults, hasNextPage, hasPreviousPage, limit },
+ *     data: { crops: Crop[] }
+ *   }
+ */
+export const fetchCrops = async (params = {}) => {
+  // Strip empty/undefined values so the URL stays clean
+  const cleaned = Object.fromEntries(
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== null && v !== ""
+    )
+  );
+  const response = await api.get("/crops", { params: cleaned });
+  return response.data;
+};
+
+/**
+ * GET /api/v1/crops (no params — used by MyCropsPage which filters client-side)
+ * Kept for backwards compatibility.
  */
 export const fetchAllCrops = async () => {
   const response = await api.get("/crops");

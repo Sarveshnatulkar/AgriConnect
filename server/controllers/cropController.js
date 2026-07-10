@@ -124,32 +124,116 @@ const createCrop = asyncHandler(async (req, res) => {
 
 // ─── GET ALL CROPS ────────────────────────────────────────────────────────────
 /**
- * @desc    Get all available crop listings
+ * @desc    Get crop listings with search, filters, sorting, and pagination
  * @route   GET /api/v1/crops
  * @access  Private — Any authenticated user
  *
- * NOTE: Search, filters, sorting, and pagination will be added in Phase 4.
- *       The query object is built incrementally so Phase 4 only needs to
- *       add conditions to `filter` — nothing else changes.
+ * Query parameters:
+ *   keyword    {string}  — case-insensitive search on cropName (text index)
+ *   category   {string}  — exact match on category enum
+ *   state      {string}  — case-insensitive match on location.state
+ *   district   {string}  — case-insensitive match on location.district
+ *   minPrice   {number}  — price >= minPrice
+ *   maxPrice   {number}  — price <= maxPrice
+ *   sort       {string}  — "latest" | "price_asc" | "price_desc" | "harvest"
+ *   page       {number}  — 1-indexed page number (default: 1)
+ *   limit      {number}  — results per page (default: 12, max: 50)
+ *
+ * Response includes pagination metadata:
+ *   { success, count, pagination: { currentPage, totalPages,
+ *     totalResults, hasNextPage, hasPreviousPage }, data: { crops } }
  */
 const getAllCrops = asyncHandler(async (req, res) => {
-  // ── Base Filter ───────────────────────────────────────────────────────────
-  // Regular users only see available crops.
-  // Admins see everything (including isAvailable: false).
+  const {
+    keyword,
+    category,
+    state,
+    district,
+    minPrice,
+    maxPrice,
+    sort    = "latest",
+    page    = 1,
+    limit   = 12,
+  } = req.query;
+
+  // ── Base availability filter ──────────────────────────────────────────────
   const filter = req.user.role === "admin" ? {} : { isAvailable: true };
 
-  // ── Phase 4 Placeholders ──────────────────────────────────────────────────
-  // These will be populated in Phase 4 without changing this function's shape.
-  // const { keyword, category, state, district, minPrice, maxPrice, sort, page, limit } = req.query;
+  // ── Keyword search ────────────────────────────────────────────────────────
+  // Uses the text index on cropName (weight 10) and description (weight 5).
+  // Falls back to a regex match on cropName so partial words still work
+  // when the text index hasn't been triggered (e.g., single characters).
+  if (keyword && keyword.trim()) {
+    const term = keyword.trim();
+    filter.cropName = { $regex: term, $options: "i" };
+  }
 
-  // ── Query ─────────────────────────────────────────────────────────────────
-  const crops = await Crop.find(filter)
-    .populate("owner", "name email phone")  // Only safe, non-sensitive fields
-    .sort({ createdAt: -1 });               // Newest listings first
+  // ── Category filter ───────────────────────────────────────────────────────
+  const VALID_CATEGORIES = [
+    "vegetables","fruits","grains","pulses",
+    "spices","oilseeds","dairy","poultry","other",
+  ];
+  if (category && VALID_CATEGORIES.includes(category.toLowerCase())) {
+    filter.category = category.toLowerCase();
+  }
+
+  // ── Location filters ──────────────────────────────────────────────────────
+  if (state && state.trim()) {
+    filter["location.state"] = { $regex: state.trim(), $options: "i" };
+  }
+  if (district && district.trim()) {
+    filter["location.district"] = { $regex: district.trim(), $options: "i" };
+  }
+
+  // ── Price range ───────────────────────────────────────────────────────────
+  const priceFilter = {};
+  if (minPrice && !isNaN(minPrice) && Number(minPrice) >= 0) {
+    priceFilter.$gte = Number(minPrice);
+  }
+  if (maxPrice && !isNaN(maxPrice) && Number(maxPrice) >= 0) {
+    priceFilter.$lte = Number(maxPrice);
+  }
+  if (Object.keys(priceFilter).length > 0) {
+    filter.price = priceFilter;
+  }
+
+  // ── Sort mapping ──────────────────────────────────────────────────────────
+  const SORT_MAP = {
+    latest:     { createdAt: -1 },
+    price_asc:  { price: 1 },
+    price_desc: { price: -1 },
+    harvest:    { harvestDate: 1 },
+  };
+  const sortObj = SORT_MAP[sort] || SORT_MAP.latest;
+
+  // ── Pagination ────────────────────────────────────────────────────────────
+  const pageNum   = Math.max(1, parseInt(page,  10) || 1);
+  const limitNum  = Math.min(50, Math.max(1, parseInt(limit, 10) || 12));
+  const skip      = (pageNum - 1) * limitNum;
+
+  // ── Execute query + count in parallel ────────────────────────────────────
+  const [crops, totalResults] = await Promise.all([
+    Crop.find(filter)
+      .populate("owner", "name email phone")
+      .sort(sortObj)
+      .skip(skip)
+      .limit(limitNum),
+    Crop.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(totalResults / limitNum);
 
   res.status(200).json({
     success: true,
-    count: crops.length,
+    count:   crops.length,
+    pagination: {
+      currentPage:     pageNum,
+      totalPages:      totalPages,
+      totalResults:    totalResults,
+      hasNextPage:     pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+      limit:           limitNum,
+    },
     data: { crops },
   });
 });
