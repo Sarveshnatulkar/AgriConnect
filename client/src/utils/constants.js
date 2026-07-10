@@ -35,6 +35,15 @@ export const ROUTES = {
 
   // Buyer
   WISHLIST:      "/wishlist",
+  MY_ORDERS:     "/orders/my",
+
+  // Farmer
+  RECEIVED_ORDERS: "/orders/received",
+
+  // Transporter
+  TRANSPORT_DASHBOARD: "/dashboard/transporter",
+  TRANSPORT_AVAILABLE: "/transport",
+  TRANSPORT_MY:        "/transport/my",
 };
 
 // ─── Role → Dashboard mapping ─────────────────────────────────────────────────

@@ -77,13 +77,16 @@ const FarmerDashboard = () => {
       <div className="card">
         <h2 className="font-semibold text-gray-800 mb-4">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
-          <Link to={ROUTES.CROP_CREATE} className="btn-primary text-sm">
+          <Link to={ROUTES.CROP_CREATE}     className="btn-primary text-sm">
             + Add New Crop
           </Link>
-          <Link to={ROUTES.MY_CROPS} className="btn-secondary text-sm">
+          <Link to={ROUTES.MY_CROPS}        className="btn-secondary text-sm">
             My Listings
           </Link>
-          <Link to={ROUTES.CROPS} className="btn-secondary text-sm">
+          <Link to={ROUTES.RECEIVED_ORDERS} className="btn-secondary text-sm">
+            Received Orders
+          </Link>
+          <Link to={ROUTES.CROPS}           className="btn-secondary text-sm">
             View Marketplace
           </Link>
         </div>
@@ -92,14 +95,22 @@ const FarmerDashboard = () => {
       {/* ── Recent Listings Placeholder ────────────────────────────────── */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-800">Recent Listings</h2>
-          <Link to={ROUTES.MY_CROPS} className="text-sm text-primary-600 hover:underline">
+          <h2 className="font-semibold text-gray-800">Received Orders</h2>
+          <Link to={ROUTES.RECEIVED_ORDERS}
+                className="text-sm text-primary-600 hover:underline">
             View all
           </Link>
         </div>
         <div className="text-center py-10 text-gray-400">
           <FaSeedling className="text-4xl mx-auto mb-3 text-gray-200" />
-          <p className="text-sm">Go to <Link to={ROUTES.MY_CROPS} className="text-primary-600 hover:underline">My Crops</Link> to manage your listings.</p>
+          <p className="text-sm">
+            Go to{" "}
+            <Link to={ROUTES.RECEIVED_ORDERS}
+                  className="text-primary-600 hover:underline">
+              Received Orders
+            </Link>{" "}
+            to accept or reject buyer orders.
+          </p>
         </div>
       </div>
 

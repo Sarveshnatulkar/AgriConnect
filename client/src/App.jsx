@@ -17,9 +17,16 @@ import CropDetailPage   from "./pages/crops/CropDetailPage";
 import WishlistPage     from "./pages/crops/WishlistPage";
 
 // Pages — farmer module
-import MyCropsPage  from "./pages/crops/MyCropsPage";
-import AddCropPage  from "./pages/crops/AddCropPage";
-import EditCropPage from "./pages/crops/EditCropPage";
+import MyCropsPage       from "./pages/crops/MyCropsPage";
+import AddCropPage       from "./pages/crops/AddCropPage";
+import EditCropPage      from "./pages/crops/EditCropPage";
+import ReceivedOrdersPage from "./pages/orders/ReceivedOrdersPage";
+
+// Pages — buyer module
+import MyOrdersPage from "./pages/orders/MyOrdersPage";
+
+// Pages — transporter module
+import TransportDashboard from "./pages/transport/TransportDashboard";
 
 // Pages — dashboards
 import FarmerDashboard from "./pages/dashboard/FarmerDashboard";
@@ -34,30 +41,31 @@ import { ROUTES, ROLES } from "./utils/constants";
  * Route tree:
  *
  *  <MainLayout>
- *    /              — HomePage          (public)
- *    /login         — LoginPage         (public)
- *    /register      — RegisterPage      (public)
- *    /unauthorized  — UnauthorizedPage  (public)
+ *    /                    — HomePage           (public)
+ *    /login               — LoginPage          (public)
+ *    /register            — RegisterPage       (public)
+ *    /unauthorized        — UnauthorizedPage   (public)
  *
- *    <ProtectedRoute>                   — any authenticated user
- *      /crops                           — MarketplacePage
+ *    <ProtectedRoute>     — any authenticated user
+ *      /crops             — MarketplacePage
+ *      /crops/:id         — CropDetailPage
+ *      /wishlist          — WishlistPage
  *
  *    <ProtectedRoute allowedRoles={["farmer","admin"]}>
- *      /dashboard/farmer                — FarmerDashboard
- *      /crops/my                        — MyCropsPage
- *      /crops/new                       — AddCropPage
- *      /crops/:id/edit                  — EditCropPage
+ *      /dashboard/farmer  — FarmerDashboard
+ *      /crops/my          — MyCropsPage
+ *      /crops/new         — AddCropPage
+ *      /crops/:id/edit    — EditCropPage
+ *      /orders/received   — ReceivedOrdersPage
  *
  *    <ProtectedRoute allowedRoles={["buyer","admin"]}>
- *      /dashboard/buyer                 — BuyerDashboard
+ *      /dashboard/buyer   — BuyerDashboard
+ *      /orders/my         — MyOrdersPage
+ *
+ *    <ProtectedRoute allowedRoles={["transporter","admin"]}>
+ *      /dashboard/transporter — TransportDashboard
  *
  *    *  — NotFoundPage (404)
- *
- * Route ordering note:
- *  /crops/my and /crops/new MUST be defined before /crops/:id/edit in the
- *  farmer block to prevent React Router from treating "my" or "new" as
- *  dynamic :id segments. (React Router v6 uses specificity ranking so this
- *  is not strictly required, but explicit ordering makes intent clear.)
  */
 
 function App() {
@@ -81,20 +89,22 @@ function App() {
         {/* ── Farmer (+ admin) ──────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER, ROLES.ADMIN]} />}>
           <Route path={ROUTES.FARMER_DASHBOARD} element={<FarmerDashboard />} />
-          <Route path={ROUTES.MY_CROPS}         element={<MyCropsPage />} />
-          <Route path={ROUTES.CROP_CREATE}      element={<AddCropPage />} />
-          <Route path={ROUTES.CROP_EDIT}        element={<EditCropPage />} />
+          <Route path={ROUTES.MY_CROPS}          element={<MyCropsPage />} />
+          <Route path={ROUTES.CROP_CREATE}       element={<AddCropPage />} />
+          <Route path={ROUTES.CROP_EDIT}         element={<EditCropPage />} />
+          <Route path={ROUTES.RECEIVED_ORDERS}   element={<ReceivedOrdersPage />} />
         </Route>
 
         {/* ── Buyer (+ admin) ───────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER, ROLES.ADMIN]} />}>
           <Route path={ROUTES.BUYER_DASHBOARD} element={<BuyerDashboard />} />
+          <Route path={ROUTES.MY_ORDERS}       element={<MyOrdersPage />} />
         </Route>
 
-        {/* ── Transporter (Phase 8) ─────────────────────────────────── */}
-        {/* <Route element={<ProtectedRoute allowedRoles={[ROLES.TRANSPORTER, ROLES.ADMIN]} />}>
-          <Route path={ROUTES.TRANSPORTER_DASHBOARD} element={<TransporterDashboard />} />
-        </Route> */}
+        {/* ── Transporter (+ admin) ─────────────────────────────────── */}
+        <Route element={<ProtectedRoute allowedRoles={[ROLES.TRANSPORTER, ROLES.ADMIN]} />}>
+          <Route path={ROUTES.TRANSPORT_DASHBOARD} element={<TransportDashboard />} />
+        </Route>
 
         {/* ── Admin (Phase 14) ──────────────────────────────────────── */}
         {/* <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>

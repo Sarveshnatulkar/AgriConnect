@@ -9,14 +9,17 @@ import {
   HiOutlineTag,
   HiHeart,
   HiOutlineHeart,
+  HiOutlineShoppingCart,
 } from "react-icons/hi";
 import { FaBoxOpen, FaLeaf, FaSeedling } from "react-icons/fa";
 import { MdOutlineStorefront } from "react-icons/md";
 import toast from "react-hot-toast";
 import Spinner from "../../components/common/Spinner";
 import ContactSellerModal from "../../components/crops/ContactSellerModal";
+import PlaceOrderModal from "../../components/orders/PlaceOrderModal";
 import { fetchCropById } from "../../services/cropService";
 import useWishlist from "../../hooks/useWishlist";
+import useAuth from "../../hooks/useAuth";
 import {
   formatCurrency,
   formatDate,
@@ -24,7 +27,7 @@ import {
   getInitials,
   getErrorMessage,
 } from "../../utils/helpers";
-import { ROUTES } from "../../utils/constants";
+import { ROUTES, ROLES } from "../../utils/constants";
 
 /**
  * CropDetailPage — full detail view for a single crop listing.
@@ -80,15 +83,20 @@ const InfoRow = ({ icon, label, value }) => {
 const CropDetailPage = () => {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [crop,          setCrop]          = useState(null);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState(null);
-  const [contactOpen,   setContactOpen]   = useState(false);
-  const [activeImg,     setActiveImg]     = useState(0);
+  const [crop,          setCrop]        = useState(null);
+  const [loading,       setLoading]     = useState(true);
+  const [error,         setError]       = useState(null);
+  const [contactOpen,   setContactOpen] = useState(false);
+  const [orderOpen,     setOrderOpen]   = useState(false);
+  const [activeImg,     setActiveImg]   = useState(0);
 
   const { toggleWishlist, isWishlisted } = useWishlist();
   const wishlisted = crop ? isWishlisted(crop._id) : false;
+
+  // Buyers can order; farmers/transporters see Contact only
+  const canOrder = user?.role === ROLES.BUYER;
 
   // ── Fetch crop ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -179,6 +187,15 @@ const CropDetailPage = () => {
           seller={owner}
           cropName={cropName}
           onClose={() => setContactOpen(false)}
+        />
+      )}
+
+      {/* Place order modal — buyers only */}
+      {orderOpen && (
+        <PlaceOrderModal
+          crop={crop}
+          onClose={() => setOrderOpen(false)}
+          onSuccess={() => navigate(ROUTES.MY_ORDERS)}
         />
       )}
 
@@ -374,33 +391,61 @@ const CropDetailPage = () => {
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={() => setContactOpen(true)}
-                className="flex-1 btn-primary flex items-center justify-center gap-2 py-3 text-base"
-              >
-                <HiOutlineMail className="text-lg" />
-                Contact Seller
-              </button>
+            <div className="flex flex-col gap-3">
+              {/* Place Order — buyers only, crop must be available */}
+              {canOrder && isAvailable && (
+                <button
+                  type="button"
+                  onClick={() => setOrderOpen(true)}
+                  className="w-full flex items-center justify-center gap-2
+                             bg-primary-600 text-white font-semibold py-3.5
+                             rounded-xl hover:bg-primary-700 transition-colors
+                             text-base focus:outline-none focus:ring-2
+                             focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  <HiOutlineShoppingCart className="text-lg" />
+                  Place Order
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={handleWishlist}
-                className={`flex items-center justify-center gap-2 py-3 px-5
-                            rounded-xl font-semibold text-base border-2
-                            transition-all duration-150
-                            ${wishlisted
-                              ? "bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
-                              : "bg-white border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-500"
-                            }`}
-                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
-              >
-                {wishlisted
-                  ? <><HiHeart className="text-xl text-red-500" /> Saved</>
-                  : <><HiOutlineHeart className="text-xl" /> Save</>
-                }
-              </button>
+              {/* Unavailable notice */}
+              {canOrder && !isAvailable && (
+                <div className="w-full flex items-center justify-center gap-2
+                                bg-gray-100 text-gray-500 font-semibold py-3.5
+                                rounded-xl text-base cursor-not-allowed">
+                  <HiOutlineShoppingCart className="text-lg" />
+                  Currently Unavailable
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setContactOpen(true)}
+                  className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3 text-base"
+                >
+                  <HiOutlineMail className="text-lg" />
+                  Contact Seller
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleWishlist}
+                  className={`flex items-center justify-center gap-2 py-3 px-5
+                              rounded-xl font-semibold text-base border-2
+                              transition-all duration-150
+                              ${wishlisted
+                                ? "bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
+                                : "bg-white border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-500"
+                              }`}
+                  aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                >
+                  {wishlisted
+                    ? <><HiHeart className="text-xl text-red-500" /> Saved</>
+                    : <><HiOutlineHeart className="text-xl" /> Save</>
+                  }
+                </button>
+              </div>
             </div>
 
             {/* Back to marketplace */}
