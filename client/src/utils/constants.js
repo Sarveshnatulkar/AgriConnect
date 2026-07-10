@@ -26,8 +26,9 @@ export const ROUTES = {
   TRANSPORTER_DASHBOARD: "/dashboard/transporter",
   ADMIN_DASHBOARD:       "/dashboard/admin",
 
-  // Crops (Phase 5+)
+  // Crops
   CROPS:         "/crops",
+  MY_CROPS:      "/crops/my",
   CROP_DETAIL:   "/crops/:id",
   CROP_CREATE:   "/crops/new",
   CROP_EDIT:     "/crops/:id/edit",

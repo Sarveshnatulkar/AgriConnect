@@ -1,15 +1,23 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 // Layout
-import MainLayout    from "./components/layout/MainLayout";
+import MainLayout     from "./components/layout/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Pages — public
-import HomePage      from "./pages/home/HomePage";
-import LoginPage     from "./pages/auth/LoginPage";
-import RegisterPage  from "./pages/auth/RegisterPage";
-import NotFoundPage  from "./pages/NotFoundPage";
+import HomePage         from "./pages/home/HomePage";
+import LoginPage        from "./pages/auth/LoginPage";
+import RegisterPage     from "./pages/auth/RegisterPage";
+import NotFoundPage     from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
+
+// Pages — marketplace (any authenticated user)
+import MarketplacePage from "./pages/crops/MarketplacePage";
+
+// Pages — farmer module
+import MyCropsPage  from "./pages/crops/MyCropsPage";
+import AddCropPage  from "./pages/crops/AddCropPage";
+import EditCropPage from "./pages/crops/EditCropPage";
 
 // Pages — dashboards
 import FarmerDashboard from "./pages/dashboard/FarmerDashboard";
@@ -21,31 +29,38 @@ import { ROUTES, ROLES } from "./utils/constants";
 /**
  * App.jsx — root route configuration.
  *
- * Route tree structure:
+ * Route tree:
  *
- *  <MainLayout>                    — renders Navbar + Footer + <Outlet />
- *    /                             — HomePage          (public)
- *    /login                        — LoginPage         (public)
- *    /register                     — RegisterPage      (public)
- *    /unauthorized                 — UnauthorizedPage  (public)
+ *  <MainLayout>
+ *    /              — HomePage          (public)
+ *    /login         — LoginPage         (public)
+ *    /register      — RegisterPage      (public)
+ *    /unauthorized  — UnauthorizedPage  (public)
  *
- *    <ProtectedRoute>              — any authenticated user
- *      /dashboard/farmer           — <ProtectedRoute allowedRoles={["farmer"]}>
- *      /dashboard/buyer            — <ProtectedRoute allowedRoles={["buyer"]}>
+ *    <ProtectedRoute>                   — any authenticated user
+ *      /crops                           — MarketplacePage
  *
- *    *                             — NotFoundPage (404)
+ *    <ProtectedRoute allowedRoles={["farmer","admin"]}>
+ *      /dashboard/farmer                — FarmerDashboard
+ *      /crops/my                        — MyCropsPage
+ *      /crops/new                       — AddCropPage
+ *      /crops/:id/edit                  — EditCropPage
  *
- * Phases ahead:
- *  Phase 5: /crops, /crops/:id, /crops/new, /crops/:id/edit  (farmer)
- *  Phase 6: buyer-specific routes
- *  Phase 8: /dashboard/transporter
- *  Phase 14: /dashboard/admin
+ *    <ProtectedRoute allowedRoles={["buyer","admin"]}>
+ *      /dashboard/buyer                 — BuyerDashboard
+ *
+ *    *  — NotFoundPage (404)
+ *
+ * Route ordering note:
+ *  /crops/my and /crops/new MUST be defined before /crops/:id/edit in the
+ *  farmer block to prevent React Router from treating "my" or "new" as
+ *  dynamic :id segments. (React Router v6 uses specificity ranking so this
+ *  is not strictly required, but explicit ordering makes intent clear.)
  */
 
 function App() {
   return (
     <Routes>
-      {/* All routes share MainLayout (Navbar + Footer) */}
       <Route element={<MainLayout />}>
 
         {/* ── Public routes ─────────────────────────────────────────── */}
@@ -54,38 +69,37 @@ function App() {
         <Route path={ROUTES.REGISTER}     element={<RegisterPage />} />
         <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
 
-        {/* ── Protected: Farmer ─────────────────────────────────────── */}
+        {/* ── Any authenticated user ────────────────────────────────── */}
+        <Route element={<ProtectedRoute />}>
+          <Route path={ROUTES.CROPS} element={<MarketplacePage />} />
+        </Route>
+
+        {/* ── Farmer (+ admin) ──────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER, ROLES.ADMIN]} />}>
-          <Route
-            path={ROUTES.FARMER_DASHBOARD}
-            element={<FarmerDashboard />}
-          />
-          {/* Phase 5: crop CRUD routes added here */}
+          <Route path={ROUTES.FARMER_DASHBOARD} element={<FarmerDashboard />} />
+          <Route path={ROUTES.MY_CROPS}         element={<MyCropsPage />} />
+          <Route path={ROUTES.CROP_CREATE}      element={<AddCropPage />} />
+          <Route path={ROUTES.CROP_EDIT}        element={<EditCropPage />} />
         </Route>
 
-        {/* ── Protected: Buyer ──────────────────────────────────────── */}
+        {/* ── Buyer (+ admin) ───────────────────────────────────────── */}
         <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER, ROLES.ADMIN]} />}>
-          <Route
-            path={ROUTES.BUYER_DASHBOARD}
-            element={<BuyerDashboard />}
-          />
+          <Route path={ROUTES.BUYER_DASHBOARD} element={<BuyerDashboard />} />
         </Route>
 
-        {/* ── Protected: Transporter (Phase 8) ─────────────────────── */}
+        {/* ── Transporter (Phase 8) ─────────────────────────────────── */}
         {/* <Route element={<ProtectedRoute allowedRoles={[ROLES.TRANSPORTER, ROLES.ADMIN]} />}>
           <Route path={ROUTES.TRANSPORTER_DASHBOARD} element={<TransporterDashboard />} />
         </Route> */}
 
-        {/* ── Protected: Admin (Phase 14) ───────────────────────────── */}
+        {/* ── Admin (Phase 14) ──────────────────────────────────────── */}
         {/* <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
           <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
         </Route> */}
 
-        {/* ── /dashboard → redirect based on role (handled at runtime) */}
-        {/* ProtectedRoute already redirects to the correct dashboard   */}
-
         {/* ── 404 ───────────────────────────────────────────────────── */}
         <Route path="*" element={<NotFoundPage />} />
+
       </Route>
     </Routes>
   );

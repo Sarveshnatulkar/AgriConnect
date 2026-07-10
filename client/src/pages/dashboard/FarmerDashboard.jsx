@@ -80,6 +80,9 @@ const FarmerDashboard = () => {
           <Link to={ROUTES.CROP_CREATE} className="btn-primary text-sm">
             + Add New Crop
           </Link>
+          <Link to={ROUTES.MY_CROPS} className="btn-secondary text-sm">
+            My Listings
+          </Link>
           <Link to={ROUTES.CROPS} className="btn-secondary text-sm">
             View Marketplace
           </Link>
@@ -88,11 +91,15 @@ const FarmerDashboard = () => {
 
       {/* ── Recent Listings Placeholder ────────────────────────────────── */}
       <div className="card">
-        <h2 className="font-semibold text-gray-800 mb-4">Recent Listings</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-800">Recent Listings</h2>
+          <Link to={ROUTES.MY_CROPS} className="text-sm text-primary-600 hover:underline">
+            View all
+          </Link>
+        </div>
         <div className="text-center py-10 text-gray-400">
           <FaSeedling className="text-4xl mx-auto mb-3 text-gray-200" />
-          <p className="text-sm">Your crop listings will appear here.</p>
-          <p className="text-xs mt-1">Full data loads in Phase 5.</p>
+          <p className="text-sm">Go to <Link to={ROUTES.MY_CROPS} className="text-primary-600 hover:underline">My Crops</Link> to manage your listings.</p>
         </div>
       </div>
 
