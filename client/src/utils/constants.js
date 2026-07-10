@@ -51,6 +51,9 @@ export const ROUTES = {
   ADMIN_CROPS:            "/admin/crops",
   ADMIN_ORDERS:           "/admin/orders",
   ADMIN_TRANSPORT:        "/admin/transport",
+
+  // Profile
+  PROFILE: "/profile",
 };
 
 // ─── Role → Dashboard mapping ─────────────────────────────────────────────────

@@ -16,6 +16,9 @@ import MarketplacePage  from "./pages/crops/MarketplacePage";
 import CropDetailPage   from "./pages/crops/CropDetailPage";
 import WishlistPage     from "./pages/crops/WishlistPage";
 
+// Pages — profile
+import ProfilePage from "./pages/profile/ProfilePage";
+
 // Pages — farmer module
 import MyCropsPage        from "./pages/crops/MyCropsPage";
 import AddCropPage        from "./pages/crops/AddCropPage";
@@ -89,6 +92,7 @@ function App() {
           <Route path={ROUTES.CROPS}       element={<MarketplacePage />} />
           <Route path={ROUTES.CROP_DETAIL} element={<CropDetailPage />} />
           <Route path={ROUTES.WISHLIST}    element={<WishlistPage />} />
+          <Route path={ROUTES.PROFILE}     element={<ProfilePage />} />
         </Route>
 
         {/* ── Farmer (+ admin) ────────────────────────────────────── */}

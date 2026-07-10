@@ -91,6 +91,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ── Update local user state ──────────────────────────────────────────────────
+  // Called by ProfilePage after a successful PUT /users/profile so the
+  // Navbar avatar/name updates immediately without a page reload.
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   // ── Context Value ───────────────────────────────────────────────────────────
   const value = {
     user,
@@ -98,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user,
   };
 
