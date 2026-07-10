@@ -171,8 +171,9 @@ const EditProfile = ({ user, onSave }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim() || form.name.trim().length < 2) e.name = "Name must be at least 2 characters";
-    if (form.name.trim().length > 50) e.name = "Name cannot exceed 50 characters";
+    const trimmedName = (form.name || "").trim();
+    if (trimmedName.length < 2)  e.name = "Name must be at least 2 characters";
+    if (trimmedName.length > 50) e.name = "Name cannot exceed 50 characters";
     return e;
   };
 

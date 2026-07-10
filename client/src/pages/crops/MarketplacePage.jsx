@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
   HiOutlineSearch,
   HiOutlineAdjustments,
@@ -180,14 +181,36 @@ const FilterSelect = ({ value, onChange, children, ariaLabel, className = "" }) 
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const VALID_CATS = [
+  "vegetables","fruits","grains","pulses",
+  "spices","oilseeds","dairy","poultry","other",
+];
+
 const MarketplacePage = () => {
-  const [crops,      setCrops]      = useState([]);
-  const [pagination, setPagination] = useState(null);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
-  const [filters,    setFilters]    = useState(DEFAULT_FILTERS);
-  const [page,       setPage]       = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
+  const location = useLocation();
+
+  // ── Seed initial filters from URL query params ─────────────────────────────
+  // e.g. /crops?category=grains  (linked from homepage category tiles)
+  const getInitialFilters = () => {
+    const params = new URLSearchParams(location.search);
+    const cat = (params.get("category") || "").toLowerCase();
+    return {
+      ...DEFAULT_FILTERS,
+      category: VALID_CATS.includes(cat) ? cat : "",
+    };
+  };
+
+  const [crops,       setCrops]       = useState([]);
+  const [pagination,  setPagination]  = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState(null);
+  const [filters,     setFilters]     = useState(getInitialFilters);
+  const [page,        setPage]        = useState(1);
+  const [showFilters, setShowFilters] = useState(() => {
+    // Auto-open the filter panel when a category was pre-selected
+    const params = new URLSearchParams(location.search);
+    return VALID_CATS.includes((params.get("category") || "").toLowerCase());
+  });
 
   // Debounce ref for keyword
   const debounceRef = useRef(null);
