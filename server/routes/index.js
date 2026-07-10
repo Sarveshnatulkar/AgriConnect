@@ -1,16 +1,25 @@
 const express = require("express");
 const router = express.Router();
 
+const authRoutes = require("./authRoutes");
+
 /**
- * Root API router.
- * All feature routers will be mounted here as phases are completed.
+ * Root API router — mounted at /api/v1 in app.js
  *
- * Example (Phase 2):
- *   const authRoutes = require("./authRoutes");
- *   router.use("/auth", authRoutes);
+ * All feature routers are registered here.
+ * As phases are completed, add them below.
+ *
+ * Current:
+ *   Phase 2: /auth
+ *
+ * Upcoming:
+ *   Phase 3: /crops
+ *   Phase 7: /orders
+ *   Phase 8: /deliveries
+ *   Phase 9: /messages
  */
 
-// Health check — confirms API is live
+// ─── Health Check ─────────────────────────────────────────────────────────────
 router.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -19,5 +28,8 @@ router.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// ─── Feature Routes ───────────────────────────────────────────────────────────
+router.use("/auth", authRoutes);
 
 module.exports = router;
