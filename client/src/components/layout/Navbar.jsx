@@ -1,151 +1,334 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { HiOutlineMenuAlt3, HiX } from "react-icons/hi";
+import {
+  HiOutlineMenuAlt3,
+  HiX,
+  HiChevronDown,
+  HiOutlineLogout,
+  HiOutlineViewGrid,
+  HiOutlineUser,
+} from "react-icons/hi";
 import { MdOutlineAgriculture } from "react-icons/md";
 import useAuth from "../../hooks/useAuth";
 import { ROUTES, ROLE_DASHBOARD } from "../../utils/constants";
 import { getInitials, capitalise } from "../../utils/helpers";
 
 /**
- * Navbar — top navigation bar.
+ * Navbar — sticky top navigation bar.
  *
- * Behaviour:
- *  - Shows logo and public links when not authenticated.
- *  - Shows role-aware navigation links when authenticated.
- *  - Shows user avatar initials and a logout button when authenticated.
- *  - Collapses to a hamburger menu on mobile (responsive).
+ * Desktop layout (≥ md):
+ *   [Logo]  [Home] [Marketplace] [Dashboard?]  ...  [Login] [Register]
+ *                                                or
+ *   [Logo]  [Home] [Marketplace] [Dashboard]   ...  [Avatar ▾ dropdown]
  *
- * Uses NavLink (not Link) for nav items so the active route gets
- * the `aria-current="page"` attribute and active styling automatically.
+ * Mobile layout (< md):
+ *   [Logo]  [☰ Hamburger]
+ *   ↓ slide-down panel with all links + user row
+ *
+ * Profile dropdown (authenticated, desktop):
+ *   - Avatar circle with initials
+ *   - Name + role badge
+ *   - "My Dashboard" link
+ *   - "Profile Settings" link  (placeholder for later phases)
+ *   - Divider
+ *   - "Logout" button (red)
+ *   Closes on: outside click, Escape key, or any item click
+ *
+ * Accessibility:
+ *   - aria-expanded on hamburger and dropdown toggles
+ *   - aria-haspopup="true" on dropdown button
+ *   - role="menu" + role="menuitem" on dropdown list
+ *   - NavLink sets aria-current="page" automatically
  */
+
+// ─── Shared NavLink active/inactive class ─────────────────────────────────────
+const navLinkClass = ({ isActive }) =>
+  isActive
+    ? "text-primary-600 font-semibold relative after:absolute after:bottom-[-2px] after:left-0 after:w-full after:h-0.5 after:bg-primary-500 after:rounded-full"
+    : "text-gray-600 hover:text-primary-700 transition-colors duration-150 relative";
+
+// ─── Role colour pill ─────────────────────────────────────────────────────────
+const ROLE_COLOURS = {
+  farmer:      "bg-primary-100 text-primary-700",
+  buyer:       "bg-blue-100   text-blue-700",
+  transporter: "bg-yellow-100 text-yellow-700",
+  admin:       "bg-purple-100 text-purple-700",
+};
+
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = async () => {
-    setMenuOpen(false);
-    await logout();
-  };
+  const [mobileOpen,   setMobileOpen]   = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const dropdownRef = useRef(null);
   const dashboardPath = user ? ROLE_DASHBOARD[user.role] : ROUTES.HOME;
 
-  // Active link style helper
-  const linkClass = ({ isActive }) =>
-    isActive
-      ? "text-primary-600 font-semibold border-b-2 border-primary-500 pb-0.5"
-      : "text-gray-600 hover:text-primary-600 transition-colors";
+  // ── Close dropdown on outside click ───────────────────────────────────────
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown",   handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown",   handleEscape);
+    };
+  }, []);
+
+  // ── Close mobile menu on route change ────────────────────────────────────
+  const closeMobile = () => setMobileOpen(false);
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    setMobileOpen(false);
+    await logout();
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
-          {/* ── Logo ─────────────────────────────────────────────────── */}
+          {/* ── Logo ───────────────────────────────────────────────────── */}
           <Link
             to={isAuthenticated ? dashboardPath : ROUTES.HOME}
-            className="flex items-center gap-2 font-bold text-xl text-primary-700"
+            className="flex items-center gap-2 group"
+            aria-label="AgriConnect home"
           >
-            <MdOutlineAgriculture className="text-2xl text-primary-600" />
-            <span>AgriConnect</span>
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center shadow-sm group-hover:bg-primary-700 transition-colors">
+              <MdOutlineAgriculture className="text-white text-lg" />
+            </div>
+            <span className="font-bold text-xl text-gray-900 tracking-tight">
+              Agri<span className="text-primary-600">Connect</span>
+            </span>
           </Link>
 
-          {/* ── Desktop Nav ───────────────────────────────────────────── */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            {!isAuthenticated ? (
-              <>
-                <NavLink to={ROUTES.HOME}     className={linkClass}>Home</NavLink>
-                <NavLink to={ROUTES.LOGIN}    className={linkClass}>Login</NavLink>
-                <NavLink to={ROUTES.REGISTER} className={linkClass}>
-                  <span className="btn-primary text-sm py-1.5 px-4">Register</span>
-                </NavLink>
-              </>
-            ) : (
-              <>
-                <NavLink to={dashboardPath} className={linkClass}>Dashboard</NavLink>
-                <NavLink to={ROUTES.CROPS}  className={linkClass}>Marketplace</NavLink>
+          {/* ── Desktop Navigation ─────────────────────────────────────── */}
+          <nav
+            className="hidden md:flex items-center gap-7 text-sm font-medium"
+            aria-label="Main navigation"
+          >
+            <NavLink to={ROUTES.HOME}  className={navLinkClass}>Home</NavLink>
+            <NavLink to={ROUTES.CROPS} className={navLinkClass}>Marketplace</NavLink>
 
-                {/* User avatar + role badge */}
-                <div className="flex items-center gap-3 ml-2">
-                  <button
-                    onClick={() => navigate(dashboardPath)}
-                    className="flex items-center gap-2 group"
-                    aria-label="Go to dashboard"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
-                      {getInitials(user.name)}
-                    </div>
-                    <div className="text-left hidden lg:block">
-                      <p className="text-sm font-medium text-gray-800 leading-none">
-                        {user.name.split(" ")[0]}
-                      </p>
-                      <p className="text-xs text-gray-400 capitalize">
-                        {capitalise(user.role)}
-                      </p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-gray-500 hover:text-red-500 transition-colors ml-1"
-                    aria-label="Log out"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </>
+            {isAuthenticated && (
+              <NavLink to={dashboardPath} className={navLinkClass}>
+                Dashboard
+              </NavLink>
             )}
           </nav>
 
-          {/* ── Mobile Hamburger ──────────────────────────────────────── */}
-          <button
-            className="md:hidden p-2 rounded-md text-gray-500 hover:text-primary-600 hover:bg-gray-100 transition"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? (
-              <HiX className="text-2xl" />
+          {/* ── Desktop Right Side ─────────────────────────────────────── */}
+          <div className="hidden md:flex items-center gap-3">
+
+            {/* Unauthenticated */}
+            {!isAuthenticated ? (
+              <>
+                <NavLink
+                  to={ROUTES.LOGIN}
+                  className="text-sm font-medium text-gray-600 hover:text-primary-600 transition-colors px-2"
+                >
+                  Login
+                </NavLink>
+                <Link
+                  to={ROUTES.REGISTER}
+                  className="btn-primary text-sm py-2 px-4"
+                >
+                  Get Started
+                </Link>
+              </>
             ) : (
-              <HiOutlineMenuAlt3 className="text-2xl" />
+              /* ── Profile Dropdown ──────────────────────────────────── */
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-1"
+                  aria-haspopup="true"
+                  aria-expanded={dropdownOpen}
+                  aria-label="Open user menu"
+                >
+                  {/* Avatar */}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {getInitials(user.name)}
+                  </div>
+                  {/* Name + role */}
+                  <div className="text-left hidden lg:block">
+                    <p className="text-sm font-semibold text-gray-800 leading-none">
+                      {user.name.split(" ")[0]}
+                    </p>
+                    <p className={`text-xs font-medium mt-0.5 px-1.5 py-0.5 rounded-full inline-block ${ROLE_COLOURS[user.role] || "bg-gray-100 text-gray-600"}`}>
+                      {capitalise(user.role)}
+                    </p>
+                  </div>
+                  <HiChevronDown
+                    className={`text-gray-400 text-lg transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {/* Dropdown panel */}
+                {dropdownOpen && (
+                  <div
+                    role="menu"
+                    aria-label="User menu"
+                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50 animate-fade-in"
+                  >
+                    {/* User info header */}
+                    <div className="px-4 py-3 border-b border-gray-50">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-1">
+                      <button
+                        role="menuitem"
+                        onClick={() => { navigate(dashboardPath); setDropdownOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <HiOutlineViewGrid className="text-lg text-gray-400 shrink-0" />
+                        My Dashboard
+                      </button>
+
+                      <button
+                        role="menuitem"
+                        onClick={() => { navigate(`/profile`); setDropdownOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                      >
+                        <HiOutlineUser className="text-lg text-gray-400 shrink-0" />
+                        Profile Settings
+                      </button>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-1">
+                      <button
+                        role="menuitem"
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
+                      >
+                        <HiOutlineLogout className="text-lg shrink-0" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
+          </div>
+
+          {/* ── Mobile: Hamburger button ────────────────────────────────── */}
+          <button
+            className="md:hidden p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-gray-50 transition-colors"
+            onClick={() => setMobileOpen((prev) => !prev)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen
+              ? <HiX className="text-2xl" />
+              : <HiOutlineMenuAlt3 className="text-2xl" />
+            }
           </button>
         </div>
       </div>
 
-      {/* ── Mobile Menu ───────────────────────────────────────────────── */}
-      {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-3 text-sm font-medium">
-          {!isAuthenticated ? (
-            <>
-              <NavLink to={ROUTES.HOME}     className={linkClass} onClick={() => setMenuOpen(false)}>Home</NavLink>
-              <NavLink to={ROUTES.LOGIN}    className={linkClass} onClick={() => setMenuOpen(false)}>Login</NavLink>
-              <NavLink to={ROUTES.REGISTER} className={linkClass} onClick={() => setMenuOpen(false)}>Register</NavLink>
-            </>
-          ) : (
-            <>
-              <NavLink to={dashboardPath} className={linkClass} onClick={() => setMenuOpen(false)}>Dashboard</NavLink>
-              <NavLink to={ROUTES.CROPS}  className={linkClass} onClick={() => setMenuOpen(false)}>Marketplace</NavLink>
-              <hr className="border-gray-100" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
-                    {getInitials(user.name)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                    <p className="text-xs text-gray-400 capitalize">{user.role}</p>
-                  </div>
+      {/* ── Mobile Menu Panel ──────────────────────────────────────────── */}
+      {mobileOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 shadow-md">
+          <nav className="flex flex-col px-4 pt-3 pb-4 gap-0.5" aria-label="Mobile navigation">
+
+            <NavLink
+              to={ROUTES.HOME}
+              onClick={closeMobile}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"
+                }`
+              }
+            >
+              Home
+            </NavLink>
+
+            <NavLink
+              to={ROUTES.CROPS}
+              onClick={closeMobile}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"
+                }`
+              }
+            >
+              Marketplace
+            </NavLink>
+
+            {isAuthenticated && (
+              <NavLink
+                to={dashboardPath}
+                onClick={closeMobile}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50"
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+            )}
+
+            {/* Auth section */}
+            <div className="mt-2 pt-3 border-t border-gray-100">
+              {!isAuthenticated ? (
+                <div className="flex flex-col gap-2">
+                  <NavLink
+                    to={ROUTES.LOGIN}
+                    onClick={closeMobile}
+                    className="btn-secondary text-sm text-center"
+                  >
+                    Login
+                  </NavLink>
+                  <NavLink
+                    to={ROUTES.REGISTER}
+                    onClick={closeMobile}
+                    className="btn-primary text-sm text-center"
+                  >
+                    Get Started
+                  </NavLink>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-red-500 font-medium"
-                >
-                  Logout
-                </button>
-              </div>
-            </>
-          )}
+              ) : (
+                /* Authenticated user row */
+                <div className="flex items-center justify-between px-1 py-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                      {getInitials(user.name)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${ROLE_COLOURS[user.role] || "bg-gray-100 text-gray-600"}`}>
+                        {capitalise(user.role)}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-1.5 text-sm text-red-600 font-medium hover:text-red-700 transition-colors"
+                  >
+                    <HiOutlineLogout className="text-lg" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </nav>
         </div>
       )}
     </header>

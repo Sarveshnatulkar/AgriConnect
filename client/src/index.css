@@ -9,9 +9,13 @@
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Better default focus ring for keyboard navigation */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
 }
 
@@ -28,7 +32,14 @@
     @apply bg-white text-primary-600 border border-primary-600 px-4 py-2
            rounded-lg font-medium hover:bg-primary-50 focus:outline-none
            focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-           transition-colors;
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg font-medium
+           hover:bg-red-700 focus:outline-none focus:ring-2
+           focus:ring-red-500 focus:ring-offset-2 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .input-field {
@@ -40,4 +51,34 @@
   .card {
     @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
   }
+
+  /* Page section heading */
+  .section-title {
+    @apply text-xl font-bold text-gray-900 mb-1;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-gray-500;
+  }
+}
+
+/* Custom animations — registered in tailwind.config.js */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.15s ease-out both;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out both;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
 }
