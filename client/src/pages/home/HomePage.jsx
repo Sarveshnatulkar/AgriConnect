@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   FaSeedling, FaShoppingBasket, FaTruck, FaShieldAlt,
-  FaMapMarkerAlt, FaLeaf, FaArrowRight, FaUsers,
-  FaBoxOpen, FaGlobeAsia, FaCheckCircle,
+  FaMapMarkerAlt, FaLeaf, FaArrowRight, FaBoxOpen,
+  FaCheckCircle, FaListAlt, FaUsersCog, FaGlobeAsia,
 } from "react-icons/fa";
 import {
   MdOutlineAgriculture, MdOutlineStorefront, MdDashboard,
@@ -18,7 +18,7 @@ import {
   HiOutlineTrendingUp, HiOutlineLightningBolt,
 } from "react-icons/hi";
 import useAuth from "../../hooks/useAuth";
-import { fetchFeaturedCrops, fetchPlatformStats } from "../../services/cropService";
+import { fetchFeaturedCrops } from "../../services/cropService";
 import { ROUTES, ROLE_DASHBOARD } from "../../utils/constants";
 import { capitalise, formatCurrency } from "../../utils/helpers";
 
@@ -173,14 +173,7 @@ const SectionHeader = ({ eyebrow, title, subtitle }) => (
   </div>
 );
 
-// ── Skeletons ─────────────────────────────────────────────────────────────────
-const StatSkeleton = () => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center gap-3 animate-pulse">
-    <div className="w-14 h-14 rounded-2xl bg-gray-200" />
-    <div className="h-8 w-20 bg-gray-200 rounded" />
-    <div className="h-4 w-16 bg-gray-100 rounded" />
-  </div>
-);
+// ── Skeleton ──────────────────────────────────────────────────────────────────
 
 const FeaturedSkeleton = () => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
@@ -201,52 +194,52 @@ const FeaturedSkeleton = () => (
 const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
 
-  const [stats,           setStats]          = useState(null);
-  const [statsLoading,    setStatsLoading]   = useState(true);
   const [featuredCrops,   setFeaturedCrops]  = useState([]);
   const [featuredLoading, setFeaturedLoading]= useState(true);
   const [featuredEmpty,   setFeaturedEmpty]  = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      fetchPlatformStats().catch(() => null),
-      fetchFeaturedCrops().catch(() => null),
-    ]).then(([statsRes, featuredRes]) => {
-      if (statsRes?.data) setStats(statsRes.data);
-      setStatsLoading(false);
-      if (featuredRes?.data?.crops?.length) {
-        setFeaturedCrops(featuredRes.data.crops);
-      } else {
-        setFeaturedEmpty(true);
-      }
-      setFeaturedLoading(false);
-    });
+    fetchFeaturedCrops()
+      .then((res) => {
+        if (res?.data?.crops?.length) {
+          setFeaturedCrops(res.data.crops);
+        } else {
+          setFeaturedEmpty(true);
+        }
+      })
+      .catch(() => setFeaturedEmpty(true))
+      .finally(() => setFeaturedLoading(false));
   }, []);
 
-  const STAT_CARDS = [
+  // ── Feature cards (static — describes what the platform does) ─────────────
+  const FEATURE_CARDS = [
     {
-      icon:    <FaUsers className="text-2xl" />,
-      value:   stats ? `${stats.farmers.toLocaleString()}+` : "—",
-      label:   "Registered Farmers",
-      iconBg:  "bg-primary-600",
+      icon:   <FaGlobeAsia className="text-2xl" />,
+      iconBg: "bg-primary-600",
+      badge:  "Nationwide",
+      title:  "Pan India Marketplace",
+      desc:   "Connect farmers and buyers across India through a unified digital marketplace.",
     },
     {
-      icon:    <FaShoppingBasket className="text-2xl" />,
-      value:   stats ? `${stats.buyers.toLocaleString()}+` : "—",
-      label:   "Active Buyers",
-      iconBg:  "bg-blue-600",
+      icon:   <FaListAlt className="text-2xl" />,
+      iconBg: "bg-purple-600",
+      badge:  "Fruits • Vegetables • Grains • Pulses",
+      title:  "Multiple Crop Categories",
+      desc:   "Browse and trade crops across multiple agricultural categories.",
     },
     {
-      icon:    <FaBoxOpen className="text-2xl" />,
-      value:   stats ? `${stats.listings.toLocaleString()}+` : "—",
-      label:   "Live Listings",
-      iconBg:  "bg-green-600",
+      icon:   <HiOutlineLightningBolt className="text-2xl" />,
+      iconBg: "bg-amber-500",
+      badge:  "Quick Listing",
+      title:  "Easy Crop Listing",
+      desc:   "Farmers can add crop listings with images, pricing, harvest date and location in just a few steps.",
     },
     {
-      icon:    <FaGlobeAsia className="text-2xl" />,
-      value:   stats ? String(stats.states) : "—",
-      label:   "States Covered",
-      iconBg:  "bg-purple-600",
+      icon:   <FaUsersCog className="text-2xl" />,
+      iconBg: "bg-blue-600",
+      badge:  "Smart Experience",
+      title:  "Role-Based Dashboards",
+      desc:   "Separate dashboards and features for Farmers, Buyers, Transporters and Admins.",
     },
   ];
 
@@ -362,30 +355,30 @@ const HomePage = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          STATISTICS — live from /api/v1/stats
+          PLATFORM FEATURES
       ══════════════════════════════════════════════════════════════ */}
-      <section className="bg-gray-50 py-16" aria-label="Platform statistics">
+      <section className="bg-gray-50 py-16" aria-label="Platform features">
         <Section>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {statsLoading
-              ? Array.from({ length: 4 }).map((_, i) => <StatSkeleton key={i} />)
-              : STAT_CARDS.map(({ icon, value, label, iconBg }) => (
-                  <div
-                    key={label}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6
-                               flex flex-col items-center gap-3 text-center
-                               hover:shadow-md hover:-translate-y-1 transition-all duration-200 group"
-                  >
-                    <div className={`w-13 h-13 rounded-xl ${iconBg} flex items-center justify-center text-white shadow-sm w-12 h-12`}>
-                      {icon}
-                    </div>
-                    <p className="text-3xl font-extrabold text-gray-900 tabular-nums tracking-tight">
-                      {value}
-                    </p>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-                  </div>
-                ))
-            }
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {FEATURE_CARDS.map(({ icon, iconBg, badge, title, desc }) => (
+              <div
+                key={title}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6
+                           flex flex-col gap-4
+                           hover:shadow-md hover:-translate-y-1 transition-all duration-200"
+              >
+                <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                  {icon}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full w-fit">
+                    {badge}
+                  </span>
+                  <h3 className="font-bold text-gray-900 text-base mt-1">{title}</h3>
+                </div>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
           </div>
         </Section>
       </section>
