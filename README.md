@@ -1,6 +1,6 @@
 # 🌾 AgriConnect
 
-![React](![React](https://img.shields.io/badge/React-18-61DAFB?logo=react))
+![React](https://img.shields.io/badge/React-19-blue?logo=react)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -36,31 +36,31 @@ AgriConnect streamlines agricultural trading by enabling farmers to list crops, 
 
 ## 🏠 Home Page
 
-![Home Page](./screenshots/Home.png)
+![Home Page](./Screenshots/Home.png)
 
 ## 🌾 Marketplace
 
-![Marketplace](./screenshots/marketplace.png)
+![Marketplace](./Screenshots/marketplace.png)
 
 ## 👨‍🌾 Farmer Dashboard
 
-![Farmer Dashboard](./screenshots/Farmer-dashboard.png)
+![Farmer Dashboard](./Screenshots/Farmer-dashboard.png)
 
 ## 🛒 Buyer Dashboard
 
-![Buyer Dashboard](./screenshots/Buyer-dashboard.png)
+![Buyer Dashboard](./Screenshots/Buyer-dashboard.png)
 
 ## 🚚 Transport Dashboard
 
-![Transport Dashboard](./screenshots/Transporter-dashboard.png)
+![Transport Dashboard](./Screenshots/Transporter-dashboard.png)
 
 ## 👨‍💼 Admin Dashboard
 
-![Admin Dashboard](./screenshots/Admin-dashboard.png)
+![Admin Dashboard](./Screenshots/Admin-dashboard.png)
 
 ## 🌱 Crop Details
 
-![Crop Details](./screenshots/cropdetails.png)
+![Crop Details](./Screenshots/cropdetails.png)
 
 ---
 
