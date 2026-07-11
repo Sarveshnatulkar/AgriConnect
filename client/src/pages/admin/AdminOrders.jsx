@@ -4,8 +4,6 @@ import {
   HiChevronLeft, HiChevronRight, HiOutlineEye,
 } from "react-icons/hi";
 import { MdOutlineShoppingCart } from "react-icons/md";
-import toast from "react-hot-toast";
-import Spinner from "../../components/common/Spinner";
 import StatusBadge from "../../components/common/StatusBadge";
 import { fetchAdminOrders } from "../../services/adminService";
 import { formatDate, formatCurrency, getErrorMessage } from "../../utils/helpers";
@@ -179,9 +177,42 @@ const AdminOrders = () => {
           )}
         </div>
 
-        {/* Loading */}
+        {/* Loading — skeleton rows */}
         {loading && (
-          <div className="flex justify-center py-16"><Spinner size="w-9 h-9" /></div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {["Order","Buyer","Farmer","Qty & Price","Status","Date",""].map((h, i) => (
+                      <th key={i} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3.5">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-gray-200 shrink-0" />
+                          <div className="flex flex-col gap-1.5">
+                            <div className="h-3.5 bg-gray-200 rounded w-24" />
+                            <div className="h-3 bg-gray-100 rounded w-14" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3.5 bg-gray-200 rounded w-20" /><div className="h-3 bg-gray-100 rounded w-28" /></div></td>
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3.5 bg-gray-200 rounded w-20" /><div className="h-3 bg-gray-100 rounded w-28" /></div></td>
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3.5 bg-gray-200 rounded w-16" /><div className="h-3 bg-gray-100 rounded w-12" /></div></td>
+                      <td className="px-5 py-3.5"><div className="h-5 bg-gray-200 rounded-full w-20" /></td>
+                      <td className="px-5 py-3.5"><div className="h-3.5 bg-gray-100 rounded w-16" /></td>
+                      <td className="px-5 py-3.5"><div className="w-8 h-8 rounded-lg bg-gray-100" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {/* Error */}
@@ -206,8 +237,18 @@ const AdminOrders = () => {
                 <tbody className="divide-y divide-gray-50">
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                        No orders found
+                      <td colSpan={7} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+                            <MdOutlineShoppingCart className="text-3xl text-gray-300" />
+                          </div>
+                          <p className="font-semibold text-gray-600">No orders found</p>
+                          <p className="text-sm text-gray-400">
+                            {(search || status)
+                              ? "Try adjusting your search or status filter."
+                              : "No orders have been placed yet."}
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : orders.map((order) => (

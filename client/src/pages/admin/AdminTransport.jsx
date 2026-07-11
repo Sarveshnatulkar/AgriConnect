@@ -192,7 +192,32 @@ const AdminTransport = () => {
         </div>
 
         {loading && (
-          <div className="flex justify-center py-16"><Spinner size="w-9 h-9" /></div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {["Crop","Route","Farmer","Transporter","Status","Date","Actions"].map((h, i) => (
+                      <th key={i} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-5 py-3.5">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3.5 bg-gray-200 rounded w-24" /><div className="h-3 bg-gray-100 rounded w-16" /></div></td>
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3 bg-gray-200 rounded w-32" /><div className="h-3 bg-gray-100 rounded w-32" /></div></td>
+                      <td className="px-5 py-3.5"><div className="flex flex-col gap-1.5"><div className="h-3.5 bg-gray-200 rounded w-20" /><div className="h-3 bg-gray-100 rounded w-24" /></div></td>
+                      <td className="px-5 py-3.5"><div className="h-3.5 bg-gray-100 rounded w-20 italic" /></td>
+                      <td className="px-5 py-3.5"><div className="h-5 bg-gray-200 rounded-full w-16" /></td>
+                      <td className="px-5 py-3.5"><div className="h-3.5 bg-gray-100 rounded w-16" /></td>
+                      <td className="px-5 py-3.5"><div className="flex gap-1.5"><div className="w-8 h-8 rounded-lg bg-gray-100" /><div className="w-8 h-8 rounded-lg bg-gray-100" /></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
 
         {!loading && error && (
@@ -215,8 +240,18 @@ const AdminTransport = () => {
                 <tbody className="divide-y divide-gray-50">
                   {requests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                        No transport requests found
+                      <td colSpan={7} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+                            <MdOutlineLocalShipping className="text-3xl text-gray-300" />
+                          </div>
+                          <p className="font-semibold text-gray-600">No transport requests found</p>
+                          <p className="text-sm text-gray-400">
+                            {status
+                              ? "Try changing the status filter."
+                              : "Transport requests are created automatically when farmers accept orders."}
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : requests.map((req) => (

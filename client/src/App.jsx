@@ -1,144 +1,132 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
+import { ROUTES, ROLES } from "./utils/constants";
 
-// Layout
+// Layout & route guards — always eagerly loaded (tiny, needed immediately)
 import MainLayout     from "./components/layout/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ScrollToTop    from "./components/common/ScrollToTop";
 
-// Pages — public
+// ── Page-level loading fallback ───────────────────────────────────────────────
+// Shown by Suspense while a lazy page chunk is downloading.
+// Matches the existing full-screen spinner used in ProtectedRoute.
+const PageLoader = () => (
+  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+    <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent
+                    rounded-full animate-spin" />
+    <p className="text-sm text-gray-500">Loading…</p>
+  </div>
+);
+
+// ── Eagerly loaded — tiny pages that are always needed on first visit ─────────
 import HomePage         from "./pages/home/HomePage";
 import LoginPage        from "./pages/auth/LoginPage";
 import RegisterPage     from "./pages/auth/RegisterPage";
 import NotFoundPage     from "./pages/NotFoundPage";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 
-// Pages — marketplace (any authenticated user)
-import MarketplacePage  from "./pages/crops/MarketplacePage";
-import CropDetailPage   from "./pages/crops/CropDetailPage";
-import WishlistPage     from "./pages/crops/WishlistPage";
+// ── Lazily loaded — heavy pages that users only reach after navigating ────────
+const MarketplacePage  = lazy(() => import("./pages/crops/MarketplacePage"));
+const CropDetailPage   = lazy(() => import("./pages/crops/CropDetailPage"));
+const WishlistPage     = lazy(() => import("./pages/crops/WishlistPage"));
+const ProfilePage      = lazy(() => import("./pages/profile/ProfilePage"));
 
-// Pages — profile
-import ProfilePage from "./pages/profile/ProfilePage";
+const MyCropsPage        = lazy(() => import("./pages/crops/MyCropsPage"));
+const AddCropPage        = lazy(() => import("./pages/crops/AddCropPage"));
+const EditCropPage       = lazy(() => import("./pages/crops/EditCropPage"));
+const ReceivedOrdersPage = lazy(() => import("./pages/orders/ReceivedOrdersPage"));
 
-// Pages — farmer module
-import MyCropsPage        from "./pages/crops/MyCropsPage";
-import AddCropPage        from "./pages/crops/AddCropPage";
-import EditCropPage       from "./pages/crops/EditCropPage";
-import ReceivedOrdersPage from "./pages/orders/ReceivedOrdersPage";
+const MyOrdersPage = lazy(() => import("./pages/orders/MyOrdersPage"));
 
-// Pages — buyer module
-import MyOrdersPage from "./pages/orders/MyOrdersPage";
+const TransportDashboard = lazy(() => import("./pages/transport/TransportDashboard"));
 
-// Pages — transporter module
-import TransportDashboard from "./pages/transport/TransportDashboard";
+const FarmerDashboard = lazy(() => import("./pages/dashboard/FarmerDashboard"));
+const BuyerDashboard  = lazy(() => import("./pages/dashboard/BuyerDashboard"));
 
-// Pages — dashboards
-import FarmerDashboard from "./pages/dashboard/FarmerDashboard";
-import BuyerDashboard  from "./pages/dashboard/BuyerDashboard";
-
-// Pages — admin module (own layout — no Navbar/Footer)
-import AdminLayout        from "./pages/admin/AdminLayout";
-import AdminDashboardHome from "./pages/admin/AdminDashboardHome";
-import AdminUsers         from "./pages/admin/AdminUsers";
-import AdminCrops         from "./pages/admin/AdminCrops";
-import AdminOrders        from "./pages/admin/AdminOrders";
-import AdminTransport     from "./pages/admin/AdminTransport";
-
-// Constants
-import { ROUTES, ROLES } from "./utils/constants";
+const AdminLayout        = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboardHome = lazy(() => import("./pages/admin/AdminDashboardHome"));
+const AdminUsers         = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminCrops         = lazy(() => import("./pages/admin/AdminCrops"));
+const AdminOrders        = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminTransport     = lazy(() => import("./pages/admin/AdminTransport"));
 
 /**
  * App.jsx — root route configuration.
  *
- * Two top-level route trees:
+ * All major pages are lazy-loaded via React.lazy() so the initial JS bundle
+ * only includes the home page, login, register, 404, and layout components.
+ * Each page chunk is downloaded on first visit and cached by the browser.
  *
- *  1. <MainLayout>  — public site (Navbar + Footer)
- *       /            HomePage (public)
- *       /login       LoginPage (public)
- *       /register    RegisterPage (public)
- *       /unauthorized
- *       /crops       MarketplacePage  (any auth)
- *       /crops/:id   CropDetailPage   (any auth)
- *       /wishlist    WishlistPage     (any auth)
- *       — farmer routes
- *       — buyer routes
- *       — transporter routes
- *       *  NotFoundPage
- *
- *  2. <AdminLayout> — admin panel (sidebar, no Navbar/Footer)
- *       /admin            AdminDashboardHome  (admin only)
- *       /admin/users      AdminUsers          (admin only)
- *       /admin/crops      AdminCrops          (admin only)
- *       /admin/orders     AdminOrders         (admin only)
- *       /admin/transport  AdminTransport      (admin only)
+ * Two route trees:
+ *  1. MainLayout  — public site with Navbar + Footer
+ *  2. AdminLayout — admin sidebar panel (no Navbar/Footer)
  */
-
 function App() {
   return (
     <>
       <ScrollToTop />
-      <Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
 
-      {/* ════════════════════════════════════════════════════════════
-          PUBLIC SITE — MainLayout (Navbar + Footer)
-      ════════════════════════════════════════════════════════════ */}
-      <Route element={<MainLayout />}>
+          {/* ════════════════════════════════════════════════════════
+              PUBLIC SITE — MainLayout (Navbar + Footer)
+          ════════════════════════════════════════════════════════ */}
+          <Route element={<MainLayout />}>
 
-        {/* ── Public ──────────────────────────────────────────────── */}
-        <Route path={ROUTES.HOME}         element={<HomePage />} />
-        <Route path={ROUTES.LOGIN}        element={<LoginPage />} />
-        <Route path={ROUTES.REGISTER}     element={<RegisterPage />} />
-        <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+            {/* Public */}
+            <Route path={ROUTES.HOME}         element={<HomePage />} />
+            <Route path={ROUTES.LOGIN}        element={<LoginPage />} />
+            <Route path={ROUTES.REGISTER}     element={<RegisterPage />} />
+            <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
 
-        {/* ── Any authenticated user ────────────────────────────── */}
-        <Route element={<ProtectedRoute />}>
-          <Route path={ROUTES.CROPS}       element={<MarketplacePage />} />
-          <Route path={ROUTES.CROP_DETAIL} element={<CropDetailPage />} />
-          <Route path={ROUTES.WISHLIST}    element={<WishlistPage />} />
-          <Route path={ROUTES.PROFILE}     element={<ProfilePage />} />
-        </Route>
+            {/* Any authenticated user */}
+            <Route element={<ProtectedRoute />}>
+              <Route path={ROUTES.CROPS}       element={<MarketplacePage />} />
+              <Route path={ROUTES.CROP_DETAIL} element={<CropDetailPage />} />
+              <Route path={ROUTES.WISHLIST}    element={<WishlistPage />} />
+              <Route path={ROUTES.PROFILE}     element={<ProfilePage />} />
+            </Route>
 
-        {/* ── Farmer (+ admin) ────────────────────────────────────── */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER, ROLES.ADMIN]} />}>
-          <Route path={ROUTES.FARMER_DASHBOARD} element={<FarmerDashboard />} />
-          <Route path={ROUTES.MY_CROPS}          element={<MyCropsPage />} />
-          <Route path={ROUTES.CROP_CREATE}       element={<AddCropPage />} />
-          <Route path={ROUTES.CROP_EDIT}         element={<EditCropPage />} />
-          <Route path={ROUTES.RECEIVED_ORDERS}   element={<ReceivedOrdersPage />} />
-        </Route>
+            {/* Farmer (+ admin) */}
+            <Route element={<ProtectedRoute allowedRoles={[ROLES.FARMER, ROLES.ADMIN]} />}>
+              <Route path={ROUTES.FARMER_DASHBOARD} element={<FarmerDashboard />} />
+              <Route path={ROUTES.MY_CROPS}          element={<MyCropsPage />} />
+              <Route path={ROUTES.CROP_CREATE}       element={<AddCropPage />} />
+              <Route path={ROUTES.CROP_EDIT}         element={<EditCropPage />} />
+              <Route path={ROUTES.RECEIVED_ORDERS}   element={<ReceivedOrdersPage />} />
+            </Route>
 
-        {/* ── Buyer (+ admin) ─────────────────────────────────────── */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER, ROLES.ADMIN]} />}>
-          <Route path={ROUTES.BUYER_DASHBOARD} element={<BuyerDashboard />} />
-          <Route path={ROUTES.MY_ORDERS}       element={<MyOrdersPage />} />
-        </Route>
+            {/* Buyer (+ admin) */}
+            <Route element={<ProtectedRoute allowedRoles={[ROLES.BUYER, ROLES.ADMIN]} />}>
+              <Route path={ROUTES.BUYER_DASHBOARD} element={<BuyerDashboard />} />
+              <Route path={ROUTES.MY_ORDERS}       element={<MyOrdersPage />} />
+            </Route>
 
-        {/* ── Transporter (+ admin) ───────────────────────────────── */}
-        <Route element={<ProtectedRoute allowedRoles={[ROLES.TRANSPORTER, ROLES.ADMIN]} />}>
-          <Route path={ROUTES.TRANSPORT_DASHBOARD} element={<TransportDashboard />} />
-        </Route>
+            {/* Transporter (+ admin) */}
+            <Route element={<ProtectedRoute allowedRoles={[ROLES.TRANSPORTER, ROLES.ADMIN]} />}>
+              <Route path={ROUTES.TRANSPORT_DASHBOARD} element={<TransportDashboard />} />
+            </Route>
 
-        {/* ── 404 ─────────────────────────────────────────────────── */}
-        <Route path="*" element={<NotFoundPage />} />
+            {/* 404 */}
+            <Route path="*" element={<NotFoundPage />} />
 
-      </Route>
+          </Route>
 
-      {/* ════════════════════════════════════════════════════════════
-          ADMIN PANEL — AdminLayout (sidebar, no Navbar/Footer)
-          All routes require role="admin". Non-admins are redirected
-          to /unauthorized by ProtectedRoute.
-      ════════════════════════════════════════════════════════════ */}
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
-        <Route element={<AdminLayout />}>
-          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardHome />} />
-          <Route path={ROUTES.ADMIN_USERS}     element={<AdminUsers />} />
-          <Route path={ROUTES.ADMIN_CROPS}     element={<AdminCrops />} />
-          <Route path={ROUTES.ADMIN_ORDERS}    element={<AdminOrders />} />
-          <Route path={ROUTES.ADMIN_TRANSPORT} element={<AdminTransport />} />
-        </Route>
-      </Route>
+          {/* ════════════════════════════════════════════════════════
+              ADMIN PANEL — AdminLayout (sidebar, no Navbar/Footer)
+          ════════════════════════════════════════════════════════ */}
+          <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
+            <Route element={<AdminLayout />}>
+              <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardHome />} />
+              <Route path={ROUTES.ADMIN_USERS}     element={<AdminUsers />} />
+              <Route path={ROUTES.ADMIN_CROPS}     element={<AdminCrops />} />
+              <Route path={ROUTES.ADMIN_ORDERS}    element={<AdminOrders />} />
+              <Route path={ROUTES.ADMIN_TRANSPORT} element={<AdminTransport />} />
+            </Route>
+          </Route>
 
-    </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

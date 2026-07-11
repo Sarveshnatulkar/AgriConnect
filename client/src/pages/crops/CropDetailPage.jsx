@@ -14,7 +14,6 @@ import {
 import { FaBoxOpen, FaLeaf, FaSeedling } from "react-icons/fa";
 import { MdOutlineStorefront } from "react-icons/md";
 import toast from "react-hot-toast";
-import Spinner from "../../components/common/Spinner";
 import ContactSellerModal from "../../components/crops/ContactSellerModal";
 import PlaceOrderModal from "../../components/orders/PlaceOrderModal";
 import { fetchCropById } from "../../services/cropService";
@@ -78,6 +77,60 @@ const InfoRow = ({ icon, label, value }) => {
   );
 };
 
+// ── Loading skeleton ──────────────────────────────────────────────────────────
+const DetailSkeleton = () => (
+  <div className="flex flex-col gap-6 animate-pulse">
+    {/* Breadcrumb */}
+    <div className="flex items-center gap-2">
+      <div className="h-4 bg-gray-200 rounded w-10" />
+      <div className="h-4 bg-gray-200 rounded w-4" />
+      <div className="h-4 bg-gray-200 rounded w-24" />
+      <div className="h-4 bg-gray-200 rounded w-4" />
+      <div className="h-4 bg-gray-200 rounded w-32" />
+    </div>
+    {/* Content grid */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Left: image */}
+      <div className="rounded-2xl bg-gray-200 aspect-[4/3]" />
+      {/* Right: info */}
+      <div className="flex flex-col gap-5">
+        <div className="flex gap-2">
+          <div className="h-6 bg-gray-200 rounded-full w-20" />
+          <div className="h-6 bg-gray-100 rounded w-28" />
+        </div>
+        <div className="h-9 bg-gray-200 rounded w-3/4" />
+        <div className="h-12 bg-gray-200 rounded w-1/2" />
+        <div className="bg-gray-50 rounded-2xl p-5 flex flex-col gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gray-200 shrink-0" />
+              <div className="flex flex-col gap-1.5 flex-1">
+                <div className="h-3 bg-gray-200 rounded w-20" />
+                <div className="h-4 bg-gray-200 rounded w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="h-4 bg-gray-200 rounded w-28" />
+          <div className="h-16 bg-gray-100 rounded-xl" />
+        </div>
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 flex gap-4">
+          <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="h-4 bg-gray-200 rounded w-1/3" />
+            <div className="h-3 bg-gray-100 rounded w-1/2" />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="h-12 bg-gray-200 rounded-xl flex-1" />
+          <div className="h-12 bg-gray-100 rounded-xl w-24" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CropDetailPage = () => {
@@ -128,12 +181,7 @@ const CropDetailPage = () => {
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <Spinner size="w-10 h-10" />
-        <p className="text-sm text-gray-500">Loading crop details…</p>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   // ── Error ─────────────────────────────────────────────────────────────────
