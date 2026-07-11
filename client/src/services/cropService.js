@@ -27,7 +27,17 @@ export const fetchCrops = async (params = {}) => {
 };
 
 /**
- * GET /api/v1/crops (no params — used by MyCropsPage)
+ * GET /api/v1/crops/my
+ * Returns ALL crops owned by the logged-in farmer — no availability filter,
+ * no pagination. Used exclusively by MyCropsPage and FarmerDashboard.
+ */
+export const fetchMyCrops = async () => {
+  const response = await api.get("/crops/my");
+  return response.data;
+};
+
+/**
+ * GET /api/v1/crops (no params — kept for backwards compatibility)
  */
 export const fetchAllCrops = async () => {
   const response = await api.get("/crops");

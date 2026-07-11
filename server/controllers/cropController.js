@@ -452,6 +452,26 @@ const getPlatformStats = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET MY CROPS ─────────────────────────────────────────────────────────────
+/**
+ * @desc    Get all crops belonging to the currently logged-in farmer.
+ *          Returns ALL their crops regardless of availability status.
+ *          No pagination — a farmer's own listings should never be truncated.
+ * @route   GET /api/v1/crops/my
+ * @access  Private — Farmer only
+ */
+const getMyCrops = asyncHandler(async (req, res) => {
+  const crops = await Crop.find({ owner: req.user._id })
+    .populate("owner", "name email phone")
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: crops.length,
+    data: { crops },
+  });
+});
+
 module.exports = {
   createCrop,
   getAllCrops,
@@ -460,4 +480,5 @@ module.exports = {
   deleteCrop,
   getFeaturedCrops,
   getPlatformStats,
+  getMyCrops,
 };

@@ -9,28 +9,21 @@ import {
 import { FaSeedling, FaMapMarkerAlt, FaCalendarAlt, FaBoxOpen } from "react-icons/fa";
 import { MdOutlineStorefront } from "react-icons/md";
 import toast from "react-hot-toast";
-import Spinner from "../../components/common/Spinner";
 import Button from "../../components/common/Button";
-import { fetchAllCrops, deleteCrop } from "../../services/cropService";
+import { fetchMyCrops, deleteCrop } from "../../services/cropService";
 import { getErrorMessage, formatCurrency, formatDate, capitalise } from "../../utils/helpers";
 import { ROUTES } from "../../utils/constants";
-import useAuth from "../../hooks/useAuth";
 
 /**
- * MyCropsPage — displays only the logged-in farmer's crop listings.
+ * MyCropsPage — displays all of the logged-in farmer's crop listings.
  *
  * Route:  /crops/my
  * Access: Farmer only (enforced via ProtectedRoute in App.jsx)
  *
  * Data strategy:
- *  Calls GET /api/v1/crops (returns all available crops + farmer sees their own
- *  unavailable ones because the controller uses isAvailable: true for non-admins).
- *  Then filters client-side by crop.owner._id === user._id.
- *
- *  Note: A dedicated GET /crops/mine endpoint will be cleaner in a later phase.
- *  The current approach works correctly because farmers can see their own crops
- *  regardless of availability through getCropById, but getAllCrops only shows
- *  available ones. For now we show all crops where owner matches.
+ *  Calls GET /api/v1/crops/my — a dedicated endpoint that returns ALL crops
+ *  owned by the logged-in farmer regardless of availability status and without
+ *  any pagination cap. This ensures unavailable/marked-sold crops still appear.
  *
  * Delete flow:
  *  1. User clicks Delete → confirmation modal appears
@@ -131,8 +124,7 @@ const SkeletonCard = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MyCropsPage = () => {
-  const { user }  = useAuth();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
 
   const [crops,       setCrops]       = useState([]);
   const [loading,     setLoading]     = useState(true);
@@ -140,23 +132,19 @@ const MyCropsPage = () => {
   const [deleteModal, setDeleteModal] = useState(null);  // { id, name }
   const [isDeleting,  setIsDeleting]  = useState(false);
 
-  // ── Fetch + filter to this farmer ─────────────────────────────────────────
+  // ── Fetch this farmer's own crops via dedicated endpoint ─────────────────
   const loadMyCrops = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchAllCrops();
-      // Filter to only this farmer's listings
-      const mine = res.data.crops.filter(
-        (c) => c.owner?._id === user._id || c.owner?._id?.toString() === user._id?.toString()
-      );
-      setCrops(mine);
+      const res = await fetchMyCrops();
+      setCrops(res.data.crops);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [user._id]);
+  }, []);
 
   useEffect(() => {
     loadMyCrops();

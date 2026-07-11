@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { ROUTES } from "../../utils/constants";
 import { getInitials, formatCurrency, formatDate, capitalise } from "../../utils/helpers";
-import { fetchAllCrops } from "../../services/cropService";
+import { fetchMyCrops } from "../../services/cropService";
 import { fetchReceivedOrders } from "../../services/orderService";
 import StatusBadge from "../../components/common/StatusBadge";
 
@@ -62,16 +62,12 @@ const FarmerDashboard = () => {
       setLoading(true);
       try {
         const [cropsRes, ordersRes] = await Promise.allSettled([
-          fetchAllCrops(),
+          fetchMyCrops(),
           fetchReceivedOrders(),
         ]);
 
-        // Filter crops to this farmer's own listings
         if (cropsRes.status === "fulfilled") {
-          const mine = cropsRes.value.data.crops.filter(
-            (c) => c.owner?._id === user._id || c.owner?._id?.toString() === user._id?.toString()
-          );
-          setCropsData(mine);
+          setCropsData(cropsRes.value.data.crops);
         }
 
         if (ordersRes.status === "fulfilled") {
@@ -82,7 +78,7 @@ const FarmerDashboard = () => {
       }
     };
     loadStats();
-  }, [user._id]);
+  }, []);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
   const activeListings = cropsData
