@@ -18,10 +18,10 @@ const generateToken = (res, userId) => {
   });
 
   res.cookie("jwt", token, {
-    httpOnly: true,                                      // Not accessible via document.cookie
-    secure: process.env.NODE_ENV === "production",       // HTTPS only in production
-    sameSite: "strict",                                  // CSRF protection
-    maxAge: 7 * 24 * 60 * 60 * 1000,                   // 7 days in milliseconds
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
