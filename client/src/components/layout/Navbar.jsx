@@ -103,7 +103,7 @@ const Navbar = () => {
 
           {/* ── Logo ───────────────────────────────────────────────────── */}
           <Link
-            to={isAuthenticated ? dashboardPath : ROUTES.HOME}
+            to={ROUTES.HOME}
             className="flex items-center gap-2 group"
             aria-label="AgriConnect home"
           >
