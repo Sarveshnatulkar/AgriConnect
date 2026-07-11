@@ -370,13 +370,13 @@ const MyCropsPage = () => {
                       </button>
 
                       <Link
-                        to={ROUTES.CROPS}
+                        to={`/crops/${crop._id}`}
                         className="flex-1 inline-flex items-center justify-center gap-1.5
                                    text-sm font-medium py-2 px-3 rounded-xl
                                    bg-gray-50 text-gray-600
                                    hover:bg-gray-200
                                    transition-colors duration-150"
-                        aria-label={`View ${crop.cropName} in marketplace`}
+                        aria-label={`View ${crop.cropName} details`}
                       >
                         <MdOutlineStorefront className="text-base" />
                         View

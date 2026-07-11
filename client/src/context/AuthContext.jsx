@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       toast.success("Logged out successfully");
-      navigate(ROUTES.LOGIN);
+      navigate(ROUTES.HOME);
     }
   };
 

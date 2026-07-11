@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import {
   MdOutlineDashboard,
   MdOutlinePeople,
@@ -32,12 +32,11 @@ const NAV_ITEMS = [
 
 const AdminLayout = () => {
   const { user, logout } = useAuth();
-  const navigate          = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
+    setMobileOpen(false);
     await logout();
-    navigate(ROUTES.LOGIN);
   };
 
   const linkClass = ({ isActive }) =>

@@ -41,10 +41,15 @@ api.interceptors.response.use(
       || "Something went wrong";
 
     // 401 = session expired or not logged in.
-    // Redirect to login, but avoid redirect loops if we're already there.
+    // Redirect to login, but only when an authenticated API call fails —
+    // never during the initial session check (/auth/me), which returns 401
+    // simply to signal "no active session" and is handled by AuthContext.
     if (status === 401) {
-      const currentPath = window.location.pathname;
-      if (currentPath !== "/login" && currentPath !== "/register") {
+      const currentPath  = window.location.pathname;
+      const requestUrl   = error.config?.url || "";
+      const isSessionCheck = requestUrl.includes("/auth/me");
+
+      if (!isSessionCheck && currentPath !== "/login" && currentPath !== "/register") {
         window.location.href = "/login";
       }
     }

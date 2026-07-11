@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 // Layout
 import MainLayout     from "./components/layout/MainLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import ScrollToTop    from "./components/common/ScrollToTop";
 
 // Pages — public
 import HomePage         from "./pages/home/HomePage";
@@ -74,7 +75,9 @@ import { ROUTES, ROLES } from "./utils/constants";
 
 function App() {
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
 
       {/* ════════════════════════════════════════════════════════════
           PUBLIC SITE — MainLayout (Navbar + Footer)
@@ -136,6 +139,7 @@ function App() {
       </Route>
 
     </Routes>
+    </>
   );
 }
 
